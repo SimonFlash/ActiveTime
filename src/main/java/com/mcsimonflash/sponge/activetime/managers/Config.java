@@ -68,14 +68,14 @@ public class Config {
     public static void updatePlayer(Player player, int newTime) {
         loadConfig();
         rootNode.getNode("players", player.getUniqueId().toString(), "name").setValue(player.getName());
-        int oldTime = getTime(player);
+        int oldTime = Util.parseTime(getTime(player));
         rootNode.getNode("players", player.getUniqueId().toString(), "time").setValue(Util.printTime(oldTime + newTime));
         saveConfig();
     }
 
-    public static int getTime(User user) {
+    public static String getTime(User user) {
         loadConfig();
-        return Util.parseTime(rootNode.getNode("players", user.getUniqueId().toString(), "time").getString(""));
+        return rootNode.getNode("players", user.getUniqueId().toString(), "time").getString("");
     }
 
     public static int getDefaultRange() {

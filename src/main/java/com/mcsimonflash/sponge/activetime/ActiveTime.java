@@ -27,12 +27,17 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.1", description = "Playertime tracker", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.2", description = "Simple Playertime Tracker", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
     public static ActiveTime getPlugin() {
         return plugin;
+    }
+
+    private static URL wiki;
+    public static URL getWiki() {
+        return wiki;
     }
 
     private static URL discord;
@@ -58,14 +63,19 @@ public class ActiveTime {
     public void onInitilization(GameInitializationEvent event) {
         plugin = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.0.1     |");
+        logger.info("|     ActiveTime -- Version 1.0.2     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         Config.readConfig();
         try {
+            wiki = new URL("https://github.com/SimonFlash/ActiveTime/wiki");
+        } catch (MalformedURLException ignored) {
+            getLogger().error("Unable to locate ActiveTime Wiki!");
+        }
+        try {
             discord = new URL("https://discordapp.com/invite/4wayq37");
         } catch (MalformedURLException ignored) {
-            getLogger().error("Unable to locate CmdCalendar Discord!");
+            getLogger().error("Unable to locate Support Discord!");
         }
 
         CommandSpec Check = CommandSpec.builder()

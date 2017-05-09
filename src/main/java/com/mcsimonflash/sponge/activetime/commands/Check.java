@@ -1,6 +1,5 @@
 package com.mcsimonflash.sponge.activetime.commands;
 
-import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.managers.Config;
 import com.mcsimonflash.sponge.activetime.managers.LogTime;
 import com.mcsimonflash.sponge.activetime.managers.Util;
@@ -20,14 +19,14 @@ public class Check implements CommandExecutor {
 
         if (user != null || (src instanceof Player)) {
             user = user == null ? (User) src : user;
-            if (user.getName().equals(src.getName()) || user.hasPermission("activetime.check.other")) {
+            if (user.getName().equals(src.getName()) || src.hasPermission("activetime.check.other")) {
                 if (user.hasPermission("activetime.log")) {
                     if (user.isOnline() && LogTime.activeTimeMap.containsKey(user.getPlayer().get())) {
                         LogTime.saveTime(user.getPlayer().get());
                     }
-                    int time = Config.getTime(user);
-                    if (time > 0) {
-                        Util.sendSrcMsg(src, Util.toText("&b" + user.getName() + " &fhas logged " + Util.printTime(time)), true);
+                    String time = Config.getTime(user);
+                    if (!time.isEmpty()) {
+                        Util.sendSrcMsg(src, Util.toText("&b" + user.getName() + " &fhas logged &b" + time + "&f!"), true);
                     } else {
                         Util.sendSrcMsg(src, Util.toText("&b" + user.getName() + " &fhas not logged any time!"), true);
                     }

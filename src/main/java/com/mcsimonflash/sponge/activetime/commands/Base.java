@@ -57,9 +57,15 @@ public class Base implements CommandExecutor {
                                 TextColors.WHITE, "Opt-Range<Integer>: ", TextColors.AQUA, "Range of top players")))
                         .build())
                 .build());
-        if (ActiveTime.getDiscord() != null) {
+        if (ActiveTime.getWiki() != null && ActiveTime.getDiscord() != null) {
             src.sendMessage(Text.builder("| ")
                     .color(TextColors.WHITE)
+                    .append(Text.builder("ActiveTime Wiki")
+                            .color(TextColors.AQUA).style(TextStyles.UNDERLINE)
+                            .onClick(TextActions.openUrl(ActiveTime.getWiki()))
+                            .onHover(TextActions.showText(Text.of("Click to open the ActiveTime Wiki")))
+                            .build())
+                    .append(Text.of(TextColors.WHITE, " | "))
                     .append(Text.builder("Support Discord")
                             .color(TextColors.AQUA).style(TextStyles.UNDERLINE)
                             .onClick(TextActions.openUrl(ActiveTime.getDiscord()))
