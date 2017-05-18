@@ -67,8 +67,8 @@ public class Config {
 
     public static void updatePlayer(Player player, int newTime) {
         loadConfig();
-        rootNode.getNode("players", player.getUniqueId().toString(), "name").setValue(player.getName());
         int oldTime = Util.parseTime(getTime(player));
+        rootNode.getNode("players", player.getUniqueId().toString(), "name").setValue(player.getName());
         rootNode.getNode("players", player.getUniqueId().toString(), "time").setValue(Util.printTime(oldTime + newTime));
         saveConfig();
     }
@@ -88,12 +88,13 @@ public class Config {
         return rootNode.getNode("config", "max-range").getInt(10);
     }
 
-    public static Map<String, String> getPlayerTimesMap() {
+    public static Map<String, Integer> getPlayerTimesMap() {
         loadConfig();
-        Map<String, String> playerTimesMap = Maps.newHashMap();
+        Map<String, Integer> playerTimesMap = Maps.newHashMap();
         Map<Object, ? extends CommentedConfigurationNode> playerUUIDs = rootNode.getNode("players").getChildrenMap();
+        int i = 1;
         for (Map.Entry<Object, ? extends ConfigurationNode> uuid : playerUUIDs.entrySet()) {
-            playerTimesMap.put(rootNode.getNode("players", uuid.getKey().toString(), "name").getString("???"), rootNode.getNode("players", uuid.getKey().toString(), "time").getString("0s"));
+            playerTimesMap.put(rootNode.getNode("players", uuid.getKey().toString(), "name").getString("?" + i++), Util.parseTime(rootNode.getNode("players", uuid.getKey().toString(), "time").getString("0")));
         }
         return playerTimesMap;
     }

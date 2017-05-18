@@ -27,7 +27,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.2", description = "Simple Playertime Tracker", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.3", description = "Simple Playertime Tracker", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
@@ -60,10 +60,10 @@ public class ActiveTime {
     }
 
     @Listener
-    public void onInitilization(GameInitializationEvent event) {
+    public void onInit(GameInitializationEvent event) {
         plugin = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.0.2     |");
+        logger.info("|     ActiveTime -- Version 1.0.3     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         Config.readConfig();
@@ -100,15 +100,15 @@ public class ActiveTime {
                 .child(Top, "Top")
                 .build();
         Sponge.getCommandManager().register(plugin, ActiveTime, Lists.newArrayList("ActiveTime", "aTime"));
-        Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("PlayTime"));
+        Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("PlayTime", "OnTime"));
     }
 
     @Listener
-    public void onPostInitialization(GamePostInitializationEvent event) {
+    public void onPostInit(GamePostInitializationEvent event) {
         if (Sponge.getPluginManager().isLoaded("nucleus")) {
             Sponge.getEventManager().registerListeners(plugin, new NucleusListeners());
         } else {
-            logger.warn("NucleusListeners could not be found! Disabling Nucleus AFK listeners");
+            logger.warn("Nucleus could not be found! Disabling Nucleus support");
         }
     }
 
@@ -119,14 +119,14 @@ public class ActiveTime {
 
 
     @Listener
-    public void onClientConnectionEvent$Join(ClientConnectionEvent.Join event, @First Player player) {
+    public void onJoin(ClientConnectionEvent.Join event, @First Player player) {
         if (player.hasPermission("activetime.log")) {
             LogTime.activeTimeMap.put(player, System.nanoTime());
         }
     }
 
     @Listener
-    public void onClientConnectionEvent$Disconnect(ClientConnectionEvent.Disconnect event, @First Player player) {
+    public void onDisconnect(ClientConnectionEvent.Disconnect event, @First Player player) {
         if (LogTime.activeTimeMap.containsKey(player)) {
             LogTime.saveTime(player);
             LogTime.activeTimeMap.remove(player);

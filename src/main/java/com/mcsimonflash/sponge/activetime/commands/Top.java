@@ -19,12 +19,12 @@ public class Top implements CommandExecutor {
             Util.sendSrcMsg(src, Util.toText("No players to display!"), true);
             return CommandResult.empty();
         }
-        if (range <= 0) {
-            Util.sendSrcMsg(src, Util.toText("Range is too low! Must be above &b0!"), true);
+        if (range < 1) {
+            Util.sendSrcMsg(src, Util.toText("Range is too low! Must be at least &b1&f!"), true);
             return CommandResult.empty();
         }
         if (range > Config.getMaxRange()) {
-            Util.sendSrcMsg(src, Util.toText("Range is too high! Must be below &b" + Config.getMaxRange()), true);
+            Util.sendSrcMsg(src, Util.toText("Range is too high! Must be at most &b" + Config.getMaxRange() + "&f!"), true);
             return CommandResult.empty();
         }
         Util.sendSrcMsg(src, Util.toText("-=-=-=-=-=[&bActiveTime&f]=-=-=-=-=-"), false);

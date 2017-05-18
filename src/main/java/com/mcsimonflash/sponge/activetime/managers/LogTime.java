@@ -13,7 +13,7 @@ import java.util.Map;
 public class LogTime {
 
     public static Task autoSaveTask;
-    public static List<String> playerTimes = Lists.newArrayList();
+    public static List<String> playerTimes = Lists.newLinkedList();
     public static Map<Player, Long> activeTimeMap = Maps.newHashMap();
 
     public static void saveTimes() {
@@ -29,8 +29,8 @@ public class LogTime {
     }
 
     public static void saveTime(Player player) {
-        int time = (int) ((System.nanoTime() - activeTimeMap.get(player))/1000000000);
-        Config.updatePlayer(player, time);
+        int time = (int) ((System.nanoTime() - activeTimeMap.get(player))/1e9);
         activeTimeMap.put(player, System.nanoTime());
+        Config.updatePlayer(player, time);
     }
 }

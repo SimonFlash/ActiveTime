@@ -1,7 +1,6 @@
 package com.mcsimonflash.sponge.activetime.managers;
 
 import com.google.common.collect.Lists;
-import com.mcsimonflash.sponge.activetime.ActiveTime;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
@@ -67,9 +66,9 @@ public class Util {
      */
 
     public static void updatePlayerTimes() {
-        Map<String, String> playerTimesMap = Config.getPlayerTimesMap();
-        List<String> players = Lists.newArrayList(playerTimesMap.keySet());
-        players.sort((o1, o2) -> Util.parseTime(playerTimesMap.get(o1)) > Util.parseTime(playerTimesMap.get(o2)) ? -1 : 1);
+        Map<String, Integer> playerTimesMap = Config.getPlayerTimesMap();
+        List<String> players = Lists.newLinkedList(playerTimesMap.keySet());
+        players.sort((o1, o2) -> playerTimesMap.get(o1) > playerTimesMap.get(o2) ? -1 : 1);
         LogTime.playerTimes.clear();
         for (String player : players) {
             LogTime.playerTimes.add("&f" + player + "&b, &f" + playerTimesMap.get(player));
