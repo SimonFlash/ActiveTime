@@ -6,7 +6,7 @@ import com.mcsimonflash.sponge.activetime.commands.Base;
 import com.mcsimonflash.sponge.activetime.commands.Check;
 import com.mcsimonflash.sponge.activetime.commands.Top;
 import com.mcsimonflash.sponge.activetime.managers.Config;
-import com.mcsimonflash.sponge.activetime.managers.NucleusListeners;
+import com.mcsimonflash.sponge.activetime.managers.NucleusIntegration;
 import com.mcsimonflash.sponge.activetime.managers.LogTime;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
@@ -21,18 +21,24 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.3", description = "Simple Playertime Tracker", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "mc1.10.2-v1.0.4", description = "Simple Playertime Tracker", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
     public static ActiveTime getPlugin() {
         return plugin;
+    }
+
+    private static PluginContainer pluginContainer;
+    public static PluginContainer getPluginContainer() {
+        return pluginContainer;
     }
 
     private static URL wiki;
@@ -54,7 +60,6 @@ public class ActiveTime {
     @Inject
     @DefaultConfig(sharedRoot = true)
     private Path defaultConfig;
-
     public Path getDefaultConfig() {
         return defaultConfig;
     }
@@ -62,8 +67,9 @@ public class ActiveTime {
     @Listener
     public void onInit(GameInitializationEvent event) {
         plugin = this;
+        pluginContainer = Sponge.getPluginManager().getPlugin("activetime").get();
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.0.3     |");
+        logger.info("|     ActiveTime -- Version 1.0.4     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         Config.readConfig();
@@ -106,7 +112,8 @@ public class ActiveTime {
     @Listener
     public void onPostInit(GamePostInitializationEvent event) {
         if (Sponge.getPluginManager().isLoaded("nucleus")) {
-            Sponge.getEventManager().registerListeners(plugin, new NucleusListeners());
+            Sponge.getEventManager().registerListeners(plugin, new NucleusIntegration());
+            NucleusIntegration.RegisterMessageToken();
         } else {
             logger.warn("Nucleus could not be found! Disabling Nucleus support");
         }

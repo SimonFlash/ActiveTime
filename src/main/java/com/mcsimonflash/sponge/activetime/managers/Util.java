@@ -21,7 +21,7 @@ public class Util {
      */
 
     public static void sendSrcMsg(CommandSource src, Text text, boolean prefix) {
-        text = prefix ? Util.toText("&2[&9ActiveTime&2] &f").concat(text) : text;
+        text = prefix ? Util.toText("&1[&9ActiveTime&1] &f").concat(text) : text;
         src.sendMessage(text);
     }
 
@@ -71,7 +71,7 @@ public class Util {
         players.sort((o1, o2) -> playerTimesMap.get(o1) > playerTimesMap.get(o2) ? -1 : 1);
         LogTime.playerTimes.clear();
         for (String player : players) {
-            LogTime.playerTimes.add("&f" + player + "&b, &f" + playerTimesMap.get(player));
+            LogTime.playerTimes.add("&f" + player + "&b, &f" + Util.printTime(playerTimesMap.get(player)));
         }
     }
 }
