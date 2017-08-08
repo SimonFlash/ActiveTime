@@ -2,46 +2,45 @@ package com.mcsimonflash.sponge.activetime.managers;
 
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import io.github.nucleuspowered.nucleus.api.NucleusAPI;
-import io.github.nucleuspowered.nucleus.api.events.NucleusAFKEvent;
 import io.github.nucleuspowered.nucleus.api.exceptions.PluginAlreadyRegisteredException;
+import io.github.nucleuspowered.nucleus.api.service.NucleusAFKService;
+import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.event.Listener;
-import org.spongepowered.api.event.filter.cause.First;
-import org.spongepowered.api.text.Text;
+import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.plugin.PluginContainer;
 
 import java.util.Optional;
 
 public class NucleusIntegration {
 
+    private static NucleusAFKService afkServ = NucleusAPI.getAFKService().get();
+
     public static void RegisterMessageToken() {
         try {
-            NucleusAPI.getMessageTokenService().register(ActiveTime.getPluginContainer(), (tokenInput, source, variables) -> {
-                if (tokenInput.equals("time") && source instanceof Player) {
-                    String activeTime = Config.getTime((Player) source);
-                    return Optional.of(Text.of(activeTime.isEmpty() ? "No Time Logged" : activeTime));
+            PluginContainer container = Sponge.getPluginManager().getPlugin("activetime").get();
+            NucleusAPI.getMessageTokenService().register(container, (tokenInput, source, variables) -> {
+                boolean active;
+                if (tokenInput.equalsIgnoreCase("activetime")) {
+                    active = true;
+                } else if (tokenInput.equalsIgnoreCase("afktime")) {
+                    active = false;
+                } else {
+                    return Optional.empty();
                 }
-                return Optional.empty();
+                if (source instanceof User) {
+                    return Optional.of(Util.toText(Util.printTime(Storage.getTotalTime(((Player) source).getUniqueId(), active))));
+                } else {
+                    return Optional.of(Util.toText(active ? "∞" : "√-1"));
+                }
             });
-            if (!NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", ActiveTime.getPluginContainer(), "time")) {
-                ActiveTime.getPlugin().getLogger().warn("Could not register Nucleus shorthand token {{activetime}}!");
-            }
+            NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", container, "activetime");
+            NucleusAPI.getMessageTokenService().registerPrimaryToken("afktime", container, "afktime");
         } catch (PluginAlreadyRegisteredException ignored) {
             ActiveTime.getPlugin().getLogger().error("Attempted duplicate registration ActiveTime Nucleus token");
         }
     }
 
-    @Listener
-    public void onNucleusAFKEvent$GoingAFK(NucleusAFKEvent.GoingAFK event, @First Player player) {
-        if (LogTime.activeTimeMap.containsKey(player)) {
-            LogTime.saveTime(player);
-            LogTime.activeTimeMap.remove(player);
-        }
-    }
-
-    @Listener
-    public void onNucleusAFKEvent$ReturningFromAFK(NucleusAFKEvent.ReturningFromAFK event, @First Player player) {
-        if (player.hasPermission("activetime.log")) {
-            LogTime.activeTimeMap.put(player, System.nanoTime());
-        }
+    public static boolean isPlayerAfk(Player player) {
+        return afkServ.isAFK(player);
     }
 }

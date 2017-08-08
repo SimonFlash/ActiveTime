@@ -1,0 +1,17 @@
+# ActiveTime - Developed by Simon_Flash
+# Config Version - 1.2.0
+#
+# For reference, check out the ActiveTime Wiki
+# https://github.com/SimonFlash/ActiveTime/wiki
+#
+# For support, check out my Discord server
+# https://discordapp.com/invite/4wayq37
+
+intervals {
+    # The interval in seconds between milestone checks
+    milestone=60
+    # The interval in seconds between saving the cache
+    save=30
+    # The interval in seconds between updates of the cache
+    update=1
+}
