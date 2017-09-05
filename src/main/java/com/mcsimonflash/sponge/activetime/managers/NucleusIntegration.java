@@ -28,7 +28,7 @@ public class NucleusIntegration {
                     return Optional.empty();
                 }
                 if (source instanceof User) {
-                    return Optional.of(Util.toText(Util.printTime(Storage.getTotalTime(((Player) source).getUniqueId(), active))));
+                    return Optional.of(Util.toText(Util.printTime(Storage.getTotalTime(((User) source).getUniqueId(), active))));
                 } else {
                     return Optional.of(Util.toText(active ? "∞" : "√-1"));
                 }

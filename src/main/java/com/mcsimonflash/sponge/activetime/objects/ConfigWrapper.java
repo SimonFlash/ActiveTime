@@ -18,8 +18,8 @@ public class ConfigWrapper {
         node = loader.load();
     }
 
-    public CommentedConfigurationNode node() {
-        return node;
+    public CommentedConfigurationNode getNode(Object... path) {
+        return node.getNode(path);
     }
 
     public boolean save() {

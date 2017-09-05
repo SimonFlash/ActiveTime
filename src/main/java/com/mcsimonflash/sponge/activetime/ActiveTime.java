@@ -4,6 +4,9 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.mcsimonflash.sponge.activetime.commands.Base;
 import com.mcsimonflash.sponge.activetime.commands.Check;
+import com.mcsimonflash.sponge.activetime.commands.Report;
+import com.mcsimonflash.sponge.activetime.commands.Leaderboard;
+import com.mcsimonflash.sponge.activetime.managers.Config;
 import com.mcsimonflash.sponge.activetime.managers.NucleusIntegration;
 import com.mcsimonflash.sponge.activetime.managers.Util;
 import org.slf4j.Logger;
@@ -20,13 +23,14 @@ import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "s6.0-v1.2.0", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "s6.0-v1.2.1", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
@@ -66,7 +70,7 @@ public class ActiveTime {
     public void onInit(GameInitializationEvent event) {
         plugin = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.2.0     |");
+        logger.info("|     ActiveTime -- Version 1.2.1     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         try {
@@ -83,11 +87,28 @@ public class ActiveTime {
                 .arguments(
                         GenericArguments.optional(GenericArguments.user(Text.of("user"))))
                 .build();
+        CommandSpec Leaderboard = CommandSpec.builder()
+                .executor(new Leaderboard())
+                .description(Text.of("Displays the leaderboard of active players"))
+                .permission("activetime.leaderboard.base")
+                .arguments(
+                        GenericArguments.optional(GenericArguments.integer(Text.of("positions"))))
+                .build();
+        CommandSpec Report = CommandSpec.builder()
+                .executor(new Report())
+                .description(Text.of("Generates an ActiveTime report"))
+                .permission("activetime.report.base")
+                .arguments(
+                        GenericArguments.onlyOne(GenericArguments.user(Text.of("user"))),
+                        GenericArguments.onlyOne(GenericArguments.integer(Text.of("days"))))
+                .build();
         CommandSpec ActiveTime = CommandSpec.builder()
                 .executor(new Base())
-                .description(Text.of("Opens in-game documentation"))
+                .description(Text.of("Opens the in-game documentation"))
                 .permission("activetime.base")
-                .child(Check, "Check")
+                .child(Check, "Check", "Time")
+                .child(Leaderboard, "Leaderboard", "Rank", "Top")
+                .child(Report, "Report", "Info")
                 .build();
         Sponge.getCommandManager().register(plugin, ActiveTime, Lists.newArrayList("ActiveTime", "aTime"));
         Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("PlayTime", "OnTime"));
@@ -99,7 +120,7 @@ public class ActiveTime {
             NucleusIntegration.RegisterMessageToken();
             nucleusEnabled = true;
         } else {
-            logger.warn("Nucleus could not be found! Disabling Nucleus support");
+            logger.warn("Nucleus could not be found! Disabling Nucleus support.");
         }
     }
 
@@ -117,5 +138,13 @@ public class ActiveTime {
     @Listener
     public void onJoin(ClientConnectionEvent.Join event, @Root Player player) {
         Util.startNameTask(player);
+        if (Config.limitInterval > 0) {
+            Task.builder()
+                    .name("ActiveTime CheckPlayerLimit Task (Async Processor)")
+                    .execute(task -> Util.checkLimit(player))
+                    .async()
+                    .submit(ActiveTime.getPlugin());
+        }
     }
+
 }

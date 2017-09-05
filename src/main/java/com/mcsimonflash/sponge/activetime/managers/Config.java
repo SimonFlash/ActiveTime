@@ -18,6 +18,9 @@ public class Config {
     public static int updateInterval;
     public static int saveInterval;
     public static int milestoneInterval;
+    public static int limitInterval;
+    public static int defaultPositions;
+    public static int maximumPositions;
 
     private static boolean initializeNodes() {
         try {
@@ -34,10 +37,12 @@ public class Config {
 
     public static boolean readConfig() {
         if (initializeNodes()) {
-            updateInterval = core.node().getNode("intervals", "update").getInt(1);
-            saveInterval = core.node().getNode("intervals", "save").getInt(30);
-            milestoneInterval = core.node().getNode("intervals", "milestone").getInt(60);
-            milestones.node().getChildrenMap().values().forEach(Config::loadMilestone);
+            updateInterval = core.getNode().getNode("intervals", "update").getInt(1);
+            saveInterval = core.getNode().getNode("intervals", "save").getInt(30);
+            milestoneInterval = core.getNode().getNode("intervals", "milestone").getInt(60);
+            defaultPositions = core.getNode().getNode("leaderboard", "default").getInt(10);
+            maximumPositions = core.getNode().getNode("leaderboard", "maximum").getInt(100);
+            milestones.getNode().getChildrenMap().values().forEach(Config::loadMilestone);
             return true;
         }
         return false;

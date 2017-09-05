@@ -29,10 +29,10 @@ public class Base implements CommandExecutor {
                                 TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows a users's active time\n",
                                 TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Check, /PlayTime, /OnTime\n",
                                 TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.check.base, activetime.check.other")))
-                        .append(Text.builder("<Opt-User> ")
+                        .append(Text.builder("[Opt-User]")
                                 .color(TextColors.AQUA)
                                 .onHover(TextActions.showText(Text.of(
-                                        TextColors.WHITE, "Opt-User: ", TextColors.AQUA, "Name of the user")))
+                                        TextColors.WHITE, "Opt-User<User>: ", TextColors.AQUA, "Name of the user")))
                                 .build())
                         .build());
             } else {
@@ -46,18 +46,33 @@ public class Base implements CommandExecutor {
                         .build());
             }
         }
-        if (src.hasPermission("activetime.top.base")) {
-            commands.add(Text.builder("/ActiveTime Top ")
+        if (src.hasPermission("activetime.report.base")) {
+            commands.add(Text.builder("/ActiveTime Report ")
                     .color(TextColors.WHITE)
-                    .onClick(TextActions.suggestCommand("/ActiveTime Top "))
+                    .onClick(TextActions.suggestCommand("/ActiveTime Report "))
                     .onHover(TextActions.showText(Text.of(
-                            TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows the most active players\n",
-                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Top\n",
-                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.top.base")))
-                    .append(Text.builder("<Opt-Range> ")
+                            TextColors.WHITE, "Report: ", TextColors.AQUA, "Generates an ActiveTime report\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Report\n",
+                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.report.base")))
+                    .append(Text.builder("<User>")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "Opt-Range<Integer>: ", TextColors.AQUA, "Range of top players")))
+                                    TextColors.WHITE, "User<User>: ", TextColors.AQUA, "Name of the user")))
+                            .build())
+                    .build());
+        }
+        if (src.hasPermission("activetime.top.base")) {
+            commands.add(Text.builder("/ActiveTime Leaderboard ")
+                    .color(TextColors.WHITE)
+                    .onClick(TextActions.suggestCommand("/ActiveTime Leaderboard "))
+                    .onHover(TextActions.showText(Text.of(
+                            TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows the most active players\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Leaderboard\n",
+                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.top.base")))
+                    .append(Text.builder("[Opt-Positions]")
+                            .color(TextColors.AQUA)
+                            .onHover(TextActions.showText(Text.of(
+                                    TextColors.WHITE, "Opt-Positions<Integer>: ", TextColors.AQUA, "Number of positions to display")))
                             .build())
                     .build());
         }

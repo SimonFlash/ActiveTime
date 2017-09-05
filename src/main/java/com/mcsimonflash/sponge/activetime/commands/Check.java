@@ -2,6 +2,7 @@ package com.mcsimonflash.sponge.activetime.commands;
 
 import com.mcsimonflash.sponge.activetime.managers.Storage;
 import com.mcsimonflash.sponge.activetime.managers.Util;
+import com.mcsimonflash.sponge.activetime.objects.TimeWrapper;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -19,9 +20,8 @@ public class Check implements CommandExecutor {
             user = user == null ? (User) src : user;
             if (user.getName().equals(src.getName()) || src.hasPermission("activetime.check.other")) {
                 if (user.hasPermission("activetime.log.base")) {
-                    src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + "&f's Log")));
-                    src.sendMessage(Util.toText("activetime: " + Util.printTime(Storage.getTotalTime(user.getUniqueId(), true))));
-                    src.sendMessage(Util.toText("afktime: " + Util.printTime(Storage.getTotalTime(user.getUniqueId(), false))));
+                    src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + "&f's Activity")));
+                    src.sendMessage(Util.toText(Util.printTime(new TimeWrapper(Storage.getTotalTime(user.getUniqueId(), true), Storage.getTotalTime(user.getUniqueId(), false)))));
                     return CommandResult.success();
                 } else {
                     src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + " &fis not being logged!")));

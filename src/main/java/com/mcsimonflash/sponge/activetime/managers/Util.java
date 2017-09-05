@@ -3,6 +3,7 @@ package com.mcsimonflash.sponge.activetime.managers;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
+import com.mcsimonflash.sponge.activetime.objects.TimeWrapper;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
@@ -14,13 +15,12 @@ import org.spongepowered.api.util.Identifiable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+//import java.util.regex.Matcher;
+//import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Util {
@@ -28,7 +28,7 @@ public class Util {
     public static final Text prefix = toText("&1[&9ActiveTime&1]&r ");
     public static final int[] timeConst = {604800, 86400, 3600, 60, 1};
     public static final String[] unitAbbrev = {"w", "d", "h", "m", "s"};
-    public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
+    //public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
 
     public static void initialize() {
         Config.readConfig();
@@ -45,9 +45,17 @@ public class Util {
         if (Storage.milestoneTask != null) {
             Storage.milestoneTask.cancel();
         }
+        if (Storage.limitTask != null) {
+            Storage.limitTask.cancel();
+        }
         startUpdateTask();
         startSaveTask();
-        startMilestoneTask();
+        if (Config.milestoneInterval > 0) {
+            startMilestoneTask();
+        }
+        if (Config.limitInterval > 0) {
+            startLimitTask();
+        }
     }
 
     public static HoconConfigurationLoader getLoader(Path path, boolean asset) throws IOException {
@@ -66,15 +74,11 @@ public class Util {
         }
     }
 
-    public static String getFileName(Calendar calendar) {
-        return calendar.get(Calendar.YEAR) + "-" + String.format("%02d", calendar.get(Calendar.MONTH) + 1) + "-" + String.format("%02d", calendar.get(Calendar.DAY_OF_MONTH));
-    }
-
     public static Text toText(String msg) {
         return TextSerializers.FORMATTING_CODE.deserialize(msg);
     }
 
-    public static int parseTime(String timeStr) {
+    /*public static int parseTime(String timeStr) {
         int time = 0;
         try {
             time = Integer.parseInt(timeStr);
@@ -89,7 +93,7 @@ public class Util {
             }
         }
         return time;
-    }
+    }*/
 
     public static String printTime(int time) {
         StringBuilder builder = new StringBuilder();
@@ -100,6 +104,10 @@ public class Util {
             }
         }
         return builder.toString();
+    }
+
+    public static String printTime(TimeWrapper time) {
+        return String.format("%s / %s (%.2d)", Util.printTime(time.getActivetime()), Util.printTime(time.getAfktime()), time.getActivetime() / (time.getActivetime() + time.getAfktime()) * 100);
     }
 
     public static void startNameTask(Player player) {
@@ -167,9 +175,8 @@ public class Util {
                             .execute(t -> {
                                 activetimes.forEach((uuid, time) -> saveTime(uuid, time, true));
                                 afktimes.forEach((uuid, time) -> saveTime(uuid, time, false));
-                                if (!Storage.syncCurrentDate()) {
-                                    ActiveTime.getPlugin().getLogger().error("Unable to resync date!");
-                                }
+                                Storage.syncCurrentDate();
+                                Storage.buildLeaderboard();
                             })
                             .async()
                             .submit(ActiveTime.getPlugin());
@@ -187,11 +194,12 @@ public class Util {
     }
 
     public static void startMilestoneTask() {
-        Storage.milestoneTask = Task.builder().name("ActiveTime SyncPlayerTimes Task")
+        Storage.milestoneTask = Task.builder()
+                .name("ActiveTime CheckMilestones Task")
                 .execute(task -> {
                     List<Player> players = Lists.newArrayList(Sponge.getServer().getOnlinePlayers());
                     Task.builder()
-                            .name("ActiveTime UpdatePlayerTimes Task (Async Processor)")
+                            .name("ActiveTime CheckMilestones Task (Async Processor)")
                             .execute(t -> players.forEach(Util::checkMilestones))
                             .async()
                             .submit(ActiveTime.getPlugin());
@@ -203,5 +211,38 @@ public class Util {
     public static void checkMilestones(Player player) {
         int activetime = Storage.getTotalTime(player.getUniqueId(), true);
         Storage.milestones.forEach(m -> m.process(player, activetime));
+    }
+
+    public static void startLimitTask() {
+        Storage.limitTask = Task.builder()
+                .name("ActiveTime LimitPlayerTimes Task")
+                .execute(task -> {
+                    List<Player> players = Lists.newArrayList(Sponge.getServer().getOnlinePlayers());
+                    Task.builder()
+                            .name("ActiveTime LimitPlayerTimes Task (Async Processor)")
+                            .execute(t -> players.forEach(Util::checkLimit))
+                            .async()
+                            .submit(ActiveTime.getPlugin());
+                })
+                .interval(Config.limitInterval * 1000 - 1, TimeUnit.MILLISECONDS)
+                .submit(ActiveTime.getPlugin());
+    }
+
+    public static void checkLimit(Player player) {
+        String option = player.getOption("playtime").orElse(null);
+        if (option != null) {
+            try {
+                int limit = Integer.parseInt(option);
+                int totaltime = Storage.getDailyTime(player.getUniqueId(), true) + Storage.getDailyTime(player.getUniqueId(), false);
+                if (totaltime >= limit) {
+                    Task.builder()
+                            .name("ActiveTime KickPlayer Task")
+                            .execute(t -> player.kick(Util.toText("You have surpassed your playtime for the day of " + option + "!")))
+                            .submit(ActiveTime.getPlugin());
+                }
+            } catch (NumberFormatException e) {
+                ActiveTime.getPlugin().getLogger().error("Invalid playtime option for player " + player.getName() + "!");
+            }
+        }
     }
 }
