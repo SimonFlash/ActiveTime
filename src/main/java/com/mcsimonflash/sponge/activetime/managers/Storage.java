@@ -102,9 +102,9 @@ public class Storage {
         LinkedList<String> players = Lists.newLinkedList(times.keySet());
         players.sort(Comparator.comparingInt(o -> times.get(o).getActivetime()));
         LinkedList<Text> tempLeaderboard = Lists.newLinkedList();
-        for (int i = 0; i <= players.size(); i++) {
+        for (int i = 0; i < players.size(); i++) {
             String player = players.get(i);
-            tempLeaderboard.add(Util.toText((i + 1) + ": " + player + " » " + Util.printTime(times.get(player))));
+            tempLeaderboard.add(Util.toText("&9" + (i + 1) + ": &f" + player + " &9» &b" + Util.printTime(times.get(player))));
         }
         leaderboard = tempLeaderboard;
     }
