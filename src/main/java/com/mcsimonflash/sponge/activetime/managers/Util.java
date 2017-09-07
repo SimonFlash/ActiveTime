@@ -107,7 +107,7 @@ public class Util {
     }
 
     public static String printTime(TimeWrapper time) {
-        return String.format("%s / %s (%.2d)", Util.printTime(time.getActivetime()), Util.printTime(time.getAfktime()), time.getActivetime() / (time.getActivetime() + time.getAfktime()) * 100);
+        return String.format("%s / %s (%.2f)", Util.printTime(time.getActivetime()), Util.printTime(time.getAfktime()), (double) time.getActivetime() / (time.getActivetime() + time.getAfktime()) * 100);
     }
 
     public static void startNameTask(Player player) {
