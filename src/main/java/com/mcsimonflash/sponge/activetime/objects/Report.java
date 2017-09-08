@@ -1,13 +1,12 @@
 package com.mcsimonflash.sponge.activetime.objects;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mcsimonflash.sponge.activetime.managers.Util;
 import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
 
 import java.time.LocalDate;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 
 public class Report {
 
@@ -22,36 +21,24 @@ public class Report {
     public TimeWrapper weeklyAverage = new TimeWrapper();
     public TimeWrapper monthlyAverage = new TimeWrapper();
 
-    public Text print() {
-        Text.Builder builder = Text.builder();
-        builder.append(Text.of("ActiveTime Report: ", TextColors.AQUA, name));
-        builder.append(Text.of("UUID: ", TextColors.AQUA, uuid));
-        builder.append(Text.of("Total: ", TextColors.AQUA, Util.printTime(total)));
-        TimeWrapper[] days = dailyTimes.values().toArray(new TimeWrapper[0]);
-        if (days.length >= 1) {
-            builder.append(Text.of("Today: ", TextColors.AQUA, Util.printTime(days[days.length-1])));
-        }
-        if (days.length >= 2) {
-            builder.append(Text.of("Yesterday: ", TextColors.AQUA, Util.printTime(days[days.length-2])));
-        }
-        builder.append(Text.of("Daily Average: ", TextColors.AQUA, Util.printTime(dailyAverage)));
-        TimeWrapper[] weeks = weeklyTimes.values().toArray(new TimeWrapper[0]);
-        if (weeks.length >= 1) {
-            builder.append(Text.of("This Week: ", TextColors.AQUA, Util.printTime(weeks[weeks.length-1])));
-        }
-        if (weeks.length >= 2) {
-            builder.append(Text.of("Last Week: ", TextColors.AQUA, Util.printTime(weeks[weeks.length-2])));
-        }
-        builder.append(Text.of("Weekly Average: ", TextColors.AQUA, Util.printTime(weeklyAverage)));
-        TimeWrapper[] months = monthlyTimes.values().toArray(new TimeWrapper[0]);
-        if (months.length >= 1) {
-            builder.append(Text.of("This Month: ", TextColors.AQUA, Util.printTime(months[months.length-1])));
-        }
-        if (months.length >= 2) {
-            builder.append(Text.of("Last Month: ", TextColors.AQUA, Util.printTime(months[months.length-2])));
-        }
-        builder.append(Text.of("Monthly Average: ", TextColors.AQUA, Util.printTime(monthlyAverage)));
-        return builder.build();
+    public List<Text> print() {
+        List<Text> texts = Lists.newArrayList();
+        texts.add(Util.toText("Name: &b" + name));
+        texts.add(Util.toText("UUID: &b" + uuid));
+        texts.add(Util.toText("Total: " + Util.printTime(total)));
+        texts.add(Util.toText("Daily Average: " + Util.printTime(dailyAverage)));
+        texts.add(Util.toText("Weekly Average: " + Util.printTime(weeklyAverage)));
+        texts.add(Util.toText("Monthly Average: " + Util.printTime(monthlyAverage)));
+        texts.add(Util.toText("Today &7(" + Util.printDate(dailyTimes.lastKey()) + ")&f: " + Util.printTime(dailyTimes.lastEntry().getValue())));
+        texts.add(Util.toText("This Week &7(" + Util.printDate(weeklyTimes.lastKey()) + ")&f: " + Util.printTime(weeklyTimes.lastEntry().getValue())));
+        texts.add(Util.toText("This Month &7(" + Util.printDate(monthlyTimes.lastKey()) + ")&f: " + Util.printTime(monthlyTimes.lastEntry().getValue())));
+        texts.add(Util.toText("Days:"));
+        dailyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        texts.add(Util.toText("Weeks:"));
+        weeklyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        texts.add(Util.toText("Months:"));
+        monthlyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        return texts;
     }
 
 }

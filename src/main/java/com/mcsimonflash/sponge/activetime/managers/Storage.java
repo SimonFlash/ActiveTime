@@ -97,14 +97,14 @@ public class Storage {
     public static void buildLeaderboard() {
         Map<String, TimeWrapper> times = Maps.newHashMap();
         for (CommentedConfigurationNode node : players.getNode().getChildrenMap().values()) {
-            times.put((String) node.getKey(), new TimeWrapper(node.getNode("activetime").getInt(0), node.getNode("afktime").getInt(0)));
+            times.put(node.getNode("username").getString((String) node.getKey()), new TimeWrapper(node.getNode("activetime").getInt(0), node.getNode("afktime").getInt(0)));
         }
         LinkedList<String> players = Lists.newLinkedList(times.keySet());
-        players.sort(Comparator.comparingInt(o -> times.get(o).getActivetime()));
+        players.sort(Comparator.comparingInt(o -> -times.get(o).getActivetime()));
         LinkedList<Text> tempLeaderboard = Lists.newLinkedList();
         for (int i = 0; i < players.size(); i++) {
             String player = players.get(i);
-            tempLeaderboard.add(Util.toText("&9" + (i + 1) + ": &f" + player + " &9» &b" + Util.printTime(times.get(player))));
+            tempLeaderboard.add(Util.toText("&b" + (i + 1) + "&7: &f" + player + " &7- " + Util.printTime(times.get(player))));
         }
         leaderboard = tempLeaderboard;
     }
@@ -118,7 +118,7 @@ public class Storage {
         LocalDate start = end.minusDays(size);
         LocalDate week = start.minusDays(start.getDayOfWeek().getValue());
         LocalDate month = start.minusDays(start.getDayOfMonth() - 1);
-        for (LocalDate date = start; !date.isAfter(start); date = date.plusDays(1)) {
+        for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             Path path = logsDir.resolve(date + ".stor");
             TimeWrapper time = new TimeWrapper();
             if (Files.exists(path)) {
@@ -133,15 +133,11 @@ public class Storage {
                 }
             }
             report.dailyTimes.put(date, time);
-            if (date.getDayOfWeek().getValue() == 7) {
-                week = date;
-                report.weeklyTimes.put(week, new TimeWrapper());
-            }
+            week = date.getDayOfWeek().getValue() == 7 ? date : week;
+            report.weeklyTimes.putIfAbsent(week, new TimeWrapper());
             report.weeklyTimes.get(week).add(time);
-            if (date.getDayOfMonth() == 1) {
-                month = date;
-                report.monthlyTimes.put(month, new TimeWrapper());
-            }
+            month = date.getDayOfMonth() == 1 ? date : month;
+            report.monthlyTimes.putIfAbsent(month, new TimeWrapper());
             report.monthlyTimes.get(month).add(time);
         }
         report.dailyTimes.values().forEach(t -> report.dailyAverage.add(t));

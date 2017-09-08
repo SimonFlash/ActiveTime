@@ -28,8 +28,8 @@ public class Leaderboard implements CommandExecutor {
                 results.add(Storage.leaderboard.get(i));
             }
             PaginationList.builder()
-                    .padding(Text.of(TextColors.DARK_BLUE, "="))
-                    .title(Text.of(TextColors.BLUE, "ActiveTime"))
+                    .padding(Text.of(TextColors.AQUA, "="))
+                    .title(Text.of("ActiveTime Leaderboard"))
                     .contents(results)
                     .sendTo(src);
             return CommandResult.success();

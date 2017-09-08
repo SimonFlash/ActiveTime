@@ -9,6 +9,9 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.User;
+import org.spongepowered.api.service.pagination.PaginationList;
+import org.spongepowered.api.text.Text;
+import org.spongepowered.api.text.format.TextColors;
 
 public class Check implements CommandExecutor {
 
@@ -20,8 +23,11 @@ public class Check implements CommandExecutor {
             user = user == null ? (User) src : user;
             if (user.getName().equals(src.getName()) || src.hasPermission("activetime.check.other")) {
                 if (user.hasPermission("activetime.log.base")) {
-                    src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + "&f's Activity")));
-                    src.sendMessage(Util.toText(Util.printTime(new TimeWrapper(Storage.getTotalTime(user.getUniqueId(), true), Storage.getTotalTime(user.getUniqueId(), false)))));
+                    PaginationList.builder()
+                            .padding(Text.of(TextColors.AQUA, "="))
+                            .title(Text.of(user.getName(), "'s Activity"))
+                            .contents(Util.toText(Util.printTime(new TimeWrapper(Storage.getTotalTime(user.getUniqueId(), true), Storage.getTotalTime(user.getUniqueId(), false)))))
+                            .sendTo(src);
                     return CommandResult.success();
                 } else {
                     src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + " &fis not being logged!")));

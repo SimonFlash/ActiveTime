@@ -15,6 +15,8 @@ import org.spongepowered.api.util.Identifiable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class Util {
 
-    public static final Text prefix = toText("&1[&9ActiveTime&1]&r ");
+    public static final Text prefix = toText("&b[&fActiveTime&b]&r ");
     public static final int[] timeConst = {604800, 86400, 3600, 60, 1};
     public static final String[] unitAbbrev = {"w", "d", "h", "m", "s"};
     //public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
@@ -96,6 +98,9 @@ public class Util {
     }*/
 
     public static String printTime(int time) {
+        if (time <= 0) {
+            return time + "s";
+        }
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < 5; i++) {
             if (time / timeConst[i] > 0) {
@@ -107,7 +112,11 @@ public class Util {
     }
 
     public static String printTime(TimeWrapper time) {
-        return String.format("%s / %s (%.2f)", Util.printTime(time.getActivetime()), Util.printTime(time.getAfktime()), (double) time.getActivetime() / (time.getActivetime() + time.getAfktime()) * 100);
+        return "&b" + Util.printTime(time.getActivetime()) + (ActiveTime.isNucleusEnabled() && time.getActivetime() + time.getAfktime() != 0 ? " &f| &b" + Util.printTime(time.getAfktime()) + " &f- &7" + new DecimalFormat("##.##%").format((double) time.getActivetime() / (time.getActivetime() + time.getAfktime())) : "");
+    }
+
+    public static String printDate(LocalDate date) {
+        return date.getMonthValue() + "/" + date.getDayOfMonth();
     }
 
     public static void startNameTask(Player player) {

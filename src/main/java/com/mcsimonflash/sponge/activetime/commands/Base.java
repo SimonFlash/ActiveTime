@@ -54,10 +54,15 @@ public class Base implements CommandExecutor {
                             TextColors.WHITE, "Report: ", TextColors.AQUA, "Generates an ActiveTime report\n",
                             TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Report\n",
                             TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.report.base")))
-                    .append(Text.builder("<User>")
+                    .append(Text.builder("<User> ")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
                                     TextColors.WHITE, "User<User>: ", TextColors.AQUA, "Name of the user")))
+                            .build())
+                    .append(Text.builder("<Days>")
+                            .color(TextColors.AQUA)
+                            .onHover(TextActions.showText(Text.of(
+                                    TextColors.WHITE, "Days<Integer>: ", TextColors.AQUA, "Number of days to include")))
                             .build())
                     .build());
         }
@@ -95,8 +100,8 @@ public class Base implements CommandExecutor {
                     .build();
         }
         PaginationList.builder()
-                .padding(Text.of(TextColors.DARK_BLUE, "="))
-                .title(Text.of(TextColors.BLUE, "ActiveTime"))
+                .padding(Text.of(TextColors.AQUA, "="))
+                .title(Text.of("ActiveTime"))
                 .contents(commands)
                 .footer(wikiDisc)
                 .sendTo(src);
