@@ -1,5 +1,6 @@
 package com.mcsimonflash.sponge.activetime.managers;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
@@ -21,8 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-//import java.util.regex.Matcher;
-//import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Util {
@@ -30,7 +31,7 @@ public class Util {
     public static final Text prefix = toText("&b[&fActiveTime&b]&r ");
     public static final int[] timeConst = {604800, 86400, 3600, 60, 1};
     public static final String[] unitAbbrev = {"w", "d", "h", "m", "s"};
-    //public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
+    public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
 
     public static void initialize() {
         Config.readConfig();
@@ -80,11 +81,11 @@ public class Util {
         return TextSerializers.FORMATTING_CODE.deserialize(msg);
     }
 
-    /*public static int parseTime(String timeStr) {
-        int time = 0;
+    public static int parseTime(String timeStr) {
         try {
-            time = Integer.parseInt(timeStr);
+            return Integer.parseInt(timeStr);
         } catch (NumberFormatException ignored) {
+            int time = 0;
             Matcher matcher = timeFormat.matcher(timeStr);
             if (matcher.matches()) {
                 for (int i = 1; i <= 5; i++) {
@@ -93,9 +94,9 @@ public class Util {
                     }
                 }
             }
+            return time;
         }
-        return time;
-    }*/
+    }
 
     public static String printTime(int time) {
         if (time <= 0) {
@@ -112,7 +113,7 @@ public class Util {
     }
 
     public static String printTime(TimeWrapper time) {
-        return "&b" + Util.printTime(time.getActivetime()) + (ActiveTime.isNucleusEnabled() && time.getActivetime() + time.getAfktime() != 0 ? " &f| &b" + Util.printTime(time.getAfktime()) + " &f- &7" + new DecimalFormat("##.##%").format((double) time.getActivetime() / (time.getActivetime() + time.getAfktime())) : "");
+        return "&b" + Util.printTime(time.getActiveTime()) + (ActiveTime.isNucleusEnabled() && time.getActiveTime() + time.getAfkTime() != 0 ? " &f| &b" + Util.printTime(time.getAfkTime()) + " &f- &7" + new DecimalFormat("##.##%").format((double) time.getActiveTime() / (time.getActiveTime() + time.getAfkTime())) : "");
     }
 
     public static String printDate(LocalDate date) {
@@ -121,11 +122,11 @@ public class Util {
 
     public static void startNameTask(Player player) {
         Task.builder()
-                .name("ActiveTime SetPlayerName Task (" + player.getName() + ")")
+                .name("ActiveTime SetUsername Task (" + player.getName() + ")")
                 .execute(task -> {
                     String name = Storage.getUsername(player.getUniqueId());
                     if (!player.getName().equals(name) && !Storage.setUsername(player.getUniqueId(), player.getName())) {
-                        ActiveTime.getPlugin().getLogger().error("Error updating playername. | UUID:[" + player.getUniqueId() + "] OldName:[" + name + "] NewName:[" + player.getName() + "]");
+                        ActiveTime.getPlugin().getLogger().error("Error updating username. | UUID:[" + player.getUniqueId() + "] OldName:[" + name + "] NewName:[" + player.getName() + "]");
                     }
                 })
                 .async()
@@ -164,26 +165,19 @@ public class Util {
     }
 
     public static void addCachedTime(UUID uuid, int time, boolean active) {
-        if (active) {
-            Storage.activetimes.put(uuid, Storage.activetimes.getOrDefault(uuid, 0) + time);
-        } else {
-            Storage.afktimes.put(uuid, Storage.afktimes.getOrDefault(uuid, 0) + time);
-        }
+        Storage.times.computeIfAbsent(uuid, u -> new TimeWrapper(0, 0)).add(time, active);
     }
 
     public static void startSaveTask() {
         Storage.saveTask = Task.builder()
                 .name("ActiveTime SavePlayerTimes Task")
                 .execute(task -> {
-                    Map<UUID, Integer> activetimes = Maps.newHashMap(Storage.activetimes);
-                    Storage.activetimes.clear();
-                    Map<UUID, Integer> afktimes = Maps.newHashMap(Storage.afktimes);
-                    Storage.afktimes.clear();
+                    ImmutableMap<UUID, TimeWrapper> times = ImmutableMap.copyOf(Storage.times);
+                    Storage.times.clear();
                     Task.builder()
                             .name("ActiveTime SavePlayerTimes Task (Async Processor)")
                             .execute(t -> {
-                                activetimes.forEach((uuid, time) -> saveTime(uuid, time, true));
-                                afktimes.forEach((uuid, time) -> saveTime(uuid, time, false));
+                                times.forEach((Util::saveTime));
                                 Storage.syncCurrentDate();
                                 Storage.buildLeaderboard();
                             })
@@ -194,11 +188,11 @@ public class Util {
                 .submit(ActiveTime.getPlugin());
     }
 
-    public static void saveTime(UUID uuid, int time, boolean active) {
-        boolean daily = Storage.setDailyTime(uuid, Storage.getDailyTime(uuid, active) + time, active);
-        boolean total = Storage.setTotalTime(uuid, Storage.getTotalTime(uuid, active) + time, active);
+    public static void saveTime(UUID uuid, TimeWrapper time) {
+        boolean total = Storage.setTotalTime(uuid, Storage.getTotalTime(uuid).add(time));
+        boolean daily = Storage.setDailyTime(uuid, Storage.getDailyTime(uuid).add(time));
         if (!daily || !total) {
-            ActiveTime.getPlugin().getLogger().error("Error saving activetime for uuid " + uuid + "!");
+            ActiveTime.getPlugin().getLogger().error("Error saving time for uuid " + uuid + "!");
         }
     }
 
@@ -218,7 +212,7 @@ public class Util {
     }
 
     public static void checkMilestones(Player player) {
-        int activetime = Storage.getTotalTime(player.getUniqueId(), true);
+        int activetime = Storage.getTotalTime(player.getUniqueId()).getActiveTime();
         Storage.milestones.forEach(m -> m.process(player, activetime));
     }
 
@@ -238,20 +232,19 @@ public class Util {
     }
 
     public static void checkLimit(Player player) {
-        String option = player.getOption("playtime").orElse(null);
-        if (option != null) {
+        player.getOption("playtime").ifPresent(o -> {
             try {
-                int limit = Integer.parseInt(option);
-                int totaltime = Storage.getDailyTime(player.getUniqueId(), true) + Storage.getDailyTime(player.getUniqueId(), false);
-                if (totaltime >= limit) {
+                int limit = parseTime(o);
+                if (Storage.getDailyTime(player.getUniqueId()).getActiveTime() >= limit) {
                     Task.builder()
                             .name("ActiveTime KickPlayer Task")
-                            .execute(t -> player.kick(Util.toText("You have surpassed your playtime for the day of " + option + "!")))
+                            .execute(t -> player.kick(Util.toText("You have surpassed your playtime for the day of " + limit + "!")))
                             .submit(ActiveTime.getPlugin());
                 }
             } catch (NumberFormatException e) {
                 ActiveTime.getPlugin().getLogger().error("Invalid playtime option for player " + player.getName() + "!");
             }
-        }
+        });
     }
+
 }

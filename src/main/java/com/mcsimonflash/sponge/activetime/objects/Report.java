@@ -16,10 +16,10 @@ public class Report {
     public TreeMap<LocalDate, TimeWrapper> dailyTimes = Maps.newTreeMap();
     public TreeMap<LocalDate, TimeWrapper> weeklyTimes = Maps.newTreeMap();
     public TreeMap<LocalDate, TimeWrapper> monthlyTimes = Maps.newTreeMap();
-    public TimeWrapper total = new TimeWrapper();
-    public TimeWrapper dailyAverage = new TimeWrapper();
-    public TimeWrapper weeklyAverage = new TimeWrapper();
-    public TimeWrapper monthlyAverage = new TimeWrapper();
+    public TimeWrapper total = new TimeWrapper(0, 0);
+    public TimeWrapper dailyAverage = new TimeWrapper(0, 0);
+    public TimeWrapper weeklyAverage = new TimeWrapper(0, 0);
+    public TimeWrapper monthlyAverage = new TimeWrapper(0, 0);
 
     public List<Text> print() {
         List<Text> texts = Lists.newArrayList();
@@ -33,12 +33,16 @@ public class Report {
         texts.add(Util.toText("This Week &7(" + Util.printDate(weeklyTimes.lastKey()) + ")&f: " + Util.printTime(weeklyTimes.lastEntry().getValue())));
         texts.add(Util.toText("This Month &7(" + Util.printDate(monthlyTimes.lastKey()) + ")&f: " + Util.printTime(monthlyTimes.lastEntry().getValue())));
         texts.add(Util.toText("Days:"));
-        dailyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        addTimes(texts, dailyTimes);
         texts.add(Util.toText("Weeks:"));
-        weeklyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        addTimes(texts, weeklyTimes);
         texts.add(Util.toText("Months:"));
-        monthlyTimes.forEach((date, time) -> texts.add(Util.toText(" - &7" + Util.printDate(date) + "&f: " + Util.printTime(time))));
+        addTimes(texts, monthlyTimes);
         return texts;
+    }
+
+    private static void addTimes(List<Text> texts, TreeMap<LocalDate, TimeWrapper> times) {
+        times.entrySet().stream().filter(e -> e.getValue().getActiveTime() != 0 || e.getValue().getAfkTime() != 0).forEach(e -> texts.add(Util.toText(" - &7" + Util.printDate(e.getKey()) + "&f: " + Util.printTime(e.getValue()))));
     }
 
 }

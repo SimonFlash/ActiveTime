@@ -9,6 +9,7 @@ import com.mcsimonflash.sponge.activetime.commands.Leaderboard;
 import com.mcsimonflash.sponge.activetime.managers.Config;
 import com.mcsimonflash.sponge.activetime.managers.NucleusIntegration;
 import com.mcsimonflash.sponge.activetime.managers.Util;
+import io.github.nucleuspowered.nucleus.Nucleus;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
@@ -30,7 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "s6.0-v1.2.4", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "1.3.0", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
@@ -70,7 +71,7 @@ public class ActiveTime {
     public void onInit(GameInitializationEvent event) {
         plugin = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.2.4     |");
+        logger.info("|     ActiveTime -- Version 1.3.0     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         try {
@@ -106,17 +107,17 @@ public class ActiveTime {
                 .executor(new Base())
                 .description(Text.of("Opens the in-game documentation"))
                 .permission("activetime.base")
-                .child(Check, "Check", "Time")
-                .child(Leaderboard, "Leaderboard", "Rank", "Top")
-                .child(Report, "Report", "Info")
+                .child(Check, "check", "time")
+                .child(Leaderboard, "leaderboard", "rank", "top")
+                .child(Report, "report", "info")
                 .build();
-        Sponge.getCommandManager().register(plugin, ActiveTime, Lists.newArrayList("ActiveTime", "aTime"));
-        Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("PlayTime", "OnTime"));
+        Sponge.getCommandManager().register(plugin, ActiveTime, Lists.newArrayList("activetime", "atime"));
+        Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("ontime", "playtime"));
     }
 
     @Listener
     public void onPostInit(GamePostInitializationEvent event) {
-        if (Sponge.getPluginManager().isLoaded("nucleus")) {
+        if (Sponge.getPluginManager().isLoaded("nucleus") && Nucleus.getNucleus().isModuleLoaded("afk")) {
             NucleusIntegration.RegisterMessageToken();
             nucleusEnabled = true;
         } else {
@@ -133,6 +134,9 @@ public class ActiveTime {
     public void onReload(GameReloadEvent event) {
         Util.initialize();
         Util.startTasks();
+        if (nucleusEnabled) {
+            NucleusIntegration.updateAFKService();
+        }
     }
 
     @Listener

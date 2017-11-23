@@ -2,7 +2,6 @@ package com.mcsimonflash.sponge.activetime.commands;
 
 import com.mcsimonflash.sponge.activetime.managers.Storage;
 import com.mcsimonflash.sponge.activetime.managers.Util;
-import com.mcsimonflash.sponge.activetime.objects.TimeWrapper;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -26,7 +25,7 @@ public class Check implements CommandExecutor {
                     PaginationList.builder()
                             .padding(Text.of(TextColors.AQUA, "="))
                             .title(Text.of(user.getName(), "'s Activity"))
-                            .contents(Util.toText(Util.printTime(new TimeWrapper(Storage.getTotalTime(user.getUniqueId(), true), Storage.getTotalTime(user.getUniqueId(), false)))))
+                            .contents(Util.toText(Util.printTime(Storage.getTotalTime(user.getUniqueId()))))
                             .sendTo(src);
                     return CommandResult.success();
                 } else {
@@ -36,7 +35,7 @@ public class Check implements CommandExecutor {
                 src.sendMessage(Util.prefix.concat(Util.toText("You do not have permission to check other player's active time!")));
             }
         } else {
-            src.sendMessage(Util.prefix.concat(Util.toText("A playername must be specified!")));
+            src.sendMessage(Util.prefix.concat(Util.toText("A player must be specified!")));
         }
         return CommandResult.empty();
     }

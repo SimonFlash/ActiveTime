@@ -35,17 +35,19 @@ public class Config {
         }
     }
 
-    public static boolean readConfig() {
+    public static void readConfig() {
         if (initializeNodes()) {
             updateInterval = core.getNode().getNode("intervals", "update").getInt(1);
             saveInterval = core.getNode().getNode("intervals", "save").getInt(30);
             milestoneInterval = core.getNode().getNode("intervals", "milestone").getInt(60);
             defaultPositions = core.getNode().getNode("leaderboard", "default").getInt(10);
             maximumPositions = core.getNode().getNode("leaderboard", "maximum").getInt(100);
+            Storage.milestones.clear();
             milestones.getNode().getChildrenMap().values().forEach(Config::loadMilestone);
-            return true;
+            if (milestoneInterval <= 0 && !Storage.milestones.isEmpty()) {
+                ActiveTime.getPlugin().getLogger().warn("Loaded milestones, but the milestone task is not enabled!");
+            }
         }
-        return false;
     }
 
     public static void loadMilestone(CommentedConfigurationNode node) {
@@ -61,4 +63,5 @@ public class Config {
         }
         Storage.milestones.add(new Milestone((String) node.getKey(), activetime, command));
     }
+
 }

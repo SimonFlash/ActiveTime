@@ -24,7 +24,7 @@ public class Report implements CommandExecutor {
                 PaginationList.builder()
                         .padding(Text.of(TextColors.AQUA, "="))
                         .title(Text.of(user.getName(), "'s Report"))
-                        .contents(Storage.buildReport(user.getUniqueId(), days).print())
+                        .contents(Storage.getReport(user.getUniqueId(), days).print())
                         .sendTo(src);
                 return CommandResult.success();
             } else {
