@@ -1,0 +1,26 @@
+plugins {
+    id 'java'
+    id 'org.spongepowered.plugin' version '0.8.1'
+}
+
+group 'com.mcsimonflash.sponge.teslacrate'
+ext {
+    activetimeversion = '1.3.0'
+    spongeapiversion = '7.0.0-SNAPSHOT'
+    completeversion = "-s${spongeapiversion.substring(0, 3)}-v${activetimeversion}"
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: '*.jar')
+    compile "org.spongepowered:spongeapi:${spongeapiversion}"
+}
+
+jar {
+    archiveName = "${project.name}${completeversion}.jar"
+}
+
+task copyJars(type: Copy) {
+    from jar into project.file("#releases/${activetimeversion}")
+}
+
+build.dependsOn(copyJars)
