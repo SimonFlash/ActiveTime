@@ -15,8 +15,8 @@ public class ActiveTimeAPI {
     /**
      * Returns the total activetime and afktime of the given user.
      *
-     * @param user the user
-     * @return the times, in seconds
+     * @param user The user
+     * @return The times, in seconds
      */
     public static TimeWrapper getTotalTime(User user) {
         return Storage.getTotalTime(user.getUniqueId());
@@ -26,8 +26,8 @@ public class ActiveTimeAPI {
      * Returns the daily activetime and afktime of the given user (today, as
      * defined by {@link LocalDate#now()}).
      *
-     * @param user the user
-     * @return the times, in seconds
+     * @param user The user
+     * @return The times, in seconds
      */
     public static TimeWrapper getDailyTime(User user) {
         return Storage.getDailyTime(user.getUniqueId());
@@ -38,8 +38,8 @@ public class ActiveTimeAPI {
      * date. If there are no logs for this date or the config could not be
      * successfully loaded, {@link Optional#empty()} is returned.
      *
-     * @param user the user
-     * @return the times, in seconds
+     * @param user The user
+     * @return The times, in seconds
      */
     public static Optional<TimeWrapper> getTime(User user, LocalDate date) {
         return Storage.getTime(user.getUniqueId(), date);
@@ -49,8 +49,8 @@ public class ActiveTimeAPI {
      * Returns the total amount of a time a user is allowed to be on the server,
      * in seconds.
      *
-     * @param user the user
-     * @return the playtime limit, if present
+     * @param user The user
+     * @return The playtime limit, if present
      */
     public static Optional<Integer> getDailyPlayTime(User user) {
         return user.getOption("playtime").map(Util::parseTime);
@@ -61,10 +61,13 @@ public class ActiveTimeAPI {
      * The report also includes the current day automatically, meaning that a
      * report for 1 day includes both yesterday and today.
      *
-     * @param user the user
-     * @param days the number of days to include
-     * @return the generated report
+     * @param user The user
+     * @param days The number of days to include
+     * @return The generated report
+     * @deprecated for removal in 1.4.0. This will be replaced with a completely
+     *             different method for retrieving a user report.
      */
+    @Deprecated
     public static Report getReport(User user, int days) {
         return Storage.getReport(user.getUniqueId(), days);
     }

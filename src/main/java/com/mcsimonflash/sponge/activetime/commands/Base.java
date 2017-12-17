@@ -29,7 +29,7 @@ public class Base implements CommandExecutor {
                                 TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows a users's active time\n",
                                 TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Check, /PlayTime, /OnTime\n",
                                 TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.check.base, activetime.check.other")))
-                        .append(Text.builder("[Opt-User]")
+                        .append(Text.builder("[User]")
                                 .color(TextColors.AQUA)
                                 .onHover(TextActions.showText(Text.of(
                                         TextColors.WHITE, "Opt-User<User>: ", TextColors.AQUA, "Name of the user")))
@@ -46,6 +46,21 @@ public class Base implements CommandExecutor {
                         .build());
             }
         }
+        if (src.hasPermission("activetime.leaderboard.base")) {
+            commands.add(Text.builder("/ActiveTime Leaderboard ")
+                    .color(TextColors.WHITE)
+                    .onClick(TextActions.suggestCommand("/ActiveTime Leaderboard "))
+                    .onHover(TextActions.showText(Text.of(
+                            TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows the most active players\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Leaderboard\n",
+                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.top.base")))
+                    .append(Text.builder("[Positions]")
+                            .color(TextColors.AQUA)
+                            .onHover(TextActions.showText(Text.of(
+                                    TextColors.WHITE, "Positions<Integer>: ", TextColors.AQUA, "Number of positions to display")))
+                            .build())
+                    .build());
+        }
         if (src.hasPermission("activetime.report.base")) {
             commands.add(Text.builder("/ActiveTime Report ")
                     .color(TextColors.WHITE)
@@ -54,30 +69,30 @@ public class Base implements CommandExecutor {
                             TextColors.WHITE, "Report: ", TextColors.AQUA, "Generates an ActiveTime report\n",
                             TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Report\n",
                             TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.report.base")))
-                    .append(Text.builder("<User> ")
+                    .append(Text.builder("[User] ")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
                                     TextColors.WHITE, "User<User>: ", TextColors.AQUA, "Name of the user")))
                             .build())
-                    .append(Text.builder("<Days>")
+                    .append(Text.builder("[Days]")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
                                     TextColors.WHITE, "Days<Integer>: ", TextColors.AQUA, "Number of days to include")))
                             .build())
                     .build());
         }
-        if (src.hasPermission("activetime.top.base")) {
-            commands.add(Text.builder("/ActiveTime Leaderboard ")
+        if (src.hasPermission("activetime.dailyreport.base")) {
+            commands.add(Text.builder("/ActiveTime DailyReport ")
                     .color(TextColors.WHITE)
-                    .onClick(TextActions.suggestCommand("/ActiveTime Leaderboard "))
+                    .onClick(TextActions.suggestCommand("/ActiveTime DailyReport "))
                     .onHover(TextActions.showText(Text.of(
-                            TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows the most active players\n",
-                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Leaderboard\n",
-                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.top.base")))
-                    .append(Text.builder("[Opt-Positions]")
+                            TextColors.WHITE, "DailyReport: ", TextColors.AQUA, "Generates a daily report\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "DailyReport\n",
+                            TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.dailyreport.base")))
+                    .append(Text.builder("[Date]")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "Opt-Positions<Integer>: ", TextColors.AQUA, "Number of positions to display")))
+                                    TextColors.WHITE, "Date<String>: ", TextColors.AQUA, "The date of the report (yyyy-mm-dd)")))
                             .build())
                     .build());
         }

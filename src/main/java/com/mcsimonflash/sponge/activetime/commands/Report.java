@@ -8,32 +8,25 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.service.pagination.PaginationList;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
+
+import java.time.LocalDate;
 
 public class Report implements CommandExecutor {
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         User user = args.<User>getOne("user").get();
-        Integer days = args.<Integer>getOne("days").get();
-
-        if (user.hasPermission("activetime.log.base")) {
-            if (days >= 0) {
-                PaginationList.builder()
-                        .padding(Text.of(TextColors.AQUA, "="))
-                        .title(Text.of(user.getName(), "'s Report"))
-                        .contents(Storage.getReport(user.getUniqueId(), days).print())
-                        .sendTo(src);
-                return CommandResult.success();
-            } else {
-                src.sendMessage(Util.prefix.concat(Util.toText("Days must be at least 1!")));
-            }
-        } else {
-            src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + " &fis not being logged!")));
+        if (!user.hasPermission("activetime.log.base")) {
+            Util.sendMessage(src, "&b" + user.getName() + " &fis not being logged!");
+            return CommandResult.empty();
         }
-        return CommandResult.empty();
+        int days = args.<Integer>getOne("days").orElseGet(() -> LocalDate.now().getDayOfMonth() - 1);
+        if (days < 0 || days > 365) {
+            Util.sendMessage(src, "Days must be within &b0 &fand &b365&f.");
+            return CommandResult.empty();
+        }
+        Util.sendPagination(src, "User Report: " + user.getName(), Storage.getReport(user.getUniqueId(), days).print());
+        return CommandResult.success();
     }
 
 }

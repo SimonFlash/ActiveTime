@@ -1,14 +1,15 @@
 package com.mcsimonflash.sponge.activetime.managers;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.objects.TimeWrapper;
 import ninja.leaping.configurate.hocon.HoconConfigurationLoader;
 import org.spongepowered.api.Sponge;
+import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.scheduler.Task;
+import org.spongepowered.api.service.pagination.PaginationList;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.serializer.TextSerializers;
 import org.spongepowered.api.util.Identifiable;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -32,6 +34,25 @@ public class Util {
     public static final int[] timeConst = {604800, 86400, 3600, 60, 1};
     public static final String[] unitAbbrev = {"w", "d", "h", "m", "s"};
     public static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
+
+    public static void sendMessage(CommandSource src, String message) {
+        src.sendMessage(prefix.concat(toText(message)));
+    }
+
+    public static void sendPagination(CommandSource src, String title, List<Text> texts) {
+        (src instanceof Player ? PaginationList.builder() : PaginationList.builder().linesPerPage(-1))
+                .title(toText(title))
+                .padding(toText("&b="))
+                .contents(texts)
+                .sendTo(src);
+    }
+
+    public static Task createTask(String name, Consumer<Task> consumer, int interval, boolean async) {
+        return (async ? Task.builder().async() : Task.builder())
+                .name(name).execute(consumer)
+                .interval(interval, TimeUnit.MILLISECONDS)
+                .submit(ActiveTime.getPlugin());
+    }
 
     public static void initialize() {
         Config.readConfig();
@@ -53,10 +74,10 @@ public class Util {
         }
         startUpdateTask();
         startSaveTask();
-        if (Config.milestoneInterval > 0) {
+        if (Config.milestoneInt > 0) {
             startMilestoneTask();
         }
-        if (Config.limitInterval > 0) {
+        if (Config.limitInt > 0) {
             startLimitTask();
         }
     }
@@ -72,7 +93,7 @@ public class Util {
             }
             return HoconConfigurationLoader.builder().setPath(path).build();
         } catch (IOException e) {
-            ActiveTime.getPlugin().getLogger().error("Error loading file! File:[" + path.getFileName().toString() + "]");
+            ActiveTime.getPlugin().getLogger().error("Error loading config file! File:[" + path.getFileName().toString() + "]");
             throw e;
         }
     }
@@ -89,9 +110,7 @@ public class Util {
             Matcher matcher = timeFormat.matcher(timeStr);
             if (matcher.matches()) {
                 for (int i = 1; i <= 5; i++) {
-                    if (matcher.group(i) != null) {
-                        time += Integer.parseInt(matcher.group(i)) * timeConst[i - 1];
-                    }
+                    time += matcher.group(i) != null ? Integer.parseInt(matcher.group(i)) * timeConst[i - 1] : 0;
                 }
             }
             return time;
@@ -113,79 +132,46 @@ public class Util {
     }
 
     public static String printTime(TimeWrapper time) {
-        return "&b" + Util.printTime(time.getActiveTime()) + (ActiveTime.isNucleusEnabled() && time.getActiveTime() + time.getAfkTime() != 0 ? " &f| &b" + Util.printTime(time.getAfkTime()) + " &f- &7" + new DecimalFormat("##.##%").format((double) time.getActiveTime() / (time.getActiveTime() + time.getAfkTime())) : "");
+        return "&b" + printTime(time.getActiveTime()) + (ActiveTime.isNucleusEnabled() && time.getActiveTime() + time.getAfkTime() != 0 ? " &f| &b" + printTime(time.getAfkTime()) + " &f- &7" + new DecimalFormat("##.##%").format((double) time.getActiveTime() / (time.getActiveTime() + time.getAfkTime())) : "");
     }
 
     public static String printDate(LocalDate date) {
-        return date.getMonthValue() + "/" + date.getDayOfMonth();
+        return date.getMonthValue() + "/" + String.format("%02d", date.getDayOfMonth());
     }
 
     public static void startNameTask(Player player) {
-        Task.builder()
-                .name("ActiveTime SetUsername Task (" + player.getName() + ")")
-                .execute(task -> {
-                    String name = Storage.getUsername(player.getUniqueId());
-                    if (!player.getName().equals(name) && !Storage.setUsername(player.getUniqueId(), player.getName())) {
-                        ActiveTime.getPlugin().getLogger().error("Error updating username. | UUID:[" + player.getUniqueId() + "] OldName:[" + name + "] NewName:[" + player.getName() + "]");
-                    }
-                })
-                .async()
-                .submit(ActiveTime.getPlugin());
+        createTask("ActiveTime UpdateUsername Task (" + player.getUniqueId() + ")", task -> {
+            String name = Storage.getUsername(player.getUniqueId());
+            if (!player.getName().equals(name) && !Storage.setUsername(player.getUniqueId(), player.getName())) {
+                ActiveTime.getPlugin().getLogger().error("Error updating username. | UUID:[" + player.getUniqueId() + "] NewName:[" + player.getName() + "] OldName:[\" + name + \"] ");
+            }
+        }, 0, true);
     }
 
     public static void startUpdateTask() {
-        if (ActiveTime.isNucleusEnabled()) {
-            Storage.updateTask = Task.builder()
-                    .name("ActiveTime UpdatePlayerTimes Task (w/ Nucleus)")
-                    .execute(task -> {
-                        Map<UUID, Boolean> players = Maps.newHashMap();
-                        Sponge.getServer().getOnlinePlayers().stream().filter(p -> p.hasPermission("activetime.log.base")).forEach(p -> players.put(p.getUniqueId(), !NucleusIntegration.isPlayerAfk(p)));
-                        Task.builder()
-                                .name("ActiveTime UpdatePlayerTimes Task (Async Processor w/ Nucleus)")
-                                .execute(t -> players.forEach((uuid, active) -> addCachedTime(uuid, 1, active)))
-                                .async()
-                                .submit(ActiveTime.getPlugin());
-                    })
-                    .interval(Config.updateInterval * 1000 - 1, TimeUnit.MILLISECONDS)
-                    .submit(ActiveTime.getPlugin());
-        } else {
-            Storage.updateTask = Task.builder()
-                    .name("ActiveTime UpdatePlayerTimes Task (w/out Nucleus)")
-                    .execute(task -> {
-                        List<UUID> players = Sponge.getServer().getOnlinePlayers().stream().filter(p -> p.hasPermission("activetime.log.base")).map(Identifiable::getUniqueId).collect(Collectors.toList());
-                        Task.builder()
-                                .name("ActiveTime UpdatePlayerTimes Task (Async Processor w/out Nucleus)")
-                                .execute(t -> players.forEach((uuid) -> addCachedTime(uuid, Config.updateInterval, true)))
-                                .async()
-                                .submit(ActiveTime.getPlugin());
-                    })
-                    .interval(Config.updateInterval * 1000 - 1, TimeUnit.MILLISECONDS)
-                    .submit(ActiveTime.getPlugin());
-        }
+        Storage.updateTask = ActiveTime.isNucleusEnabled() ? createTask("ActiveTime UpdateTimes Task (Nucleus)", task -> {
+            Map<UUID, Boolean> players = Sponge.getServer().getOnlinePlayers().stream().filter(p -> p.hasPermission("activetime.log.base")).collect(Collectors.toMap(Identifiable::getUniqueId, p -> !NucleusIntegration.isPlayerAfk(p)));
+            createTask("ActiveTime UpdateTimes Async Processor (Nucleus)", t -> players.forEach((u, a) -> addCachedTime(u, Config.updateInt, a)), 0, true);
+        }, Config.updateInt * 1000 - 1, false) : createTask("ActiveTime UpdateTimes Task", task -> {
+            List<UUID> players = Sponge.getServer().getOnlinePlayers().stream().filter(p -> p.hasPermission("activetime.log.base")).map(Identifiable::getUniqueId).collect(Collectors.toList());
+            createTask("ActiveTime UpdateTimes Async Processor", t -> players.forEach(u -> addCachedTime(u, Config.updateInt, true)), 0, true);
+        }, Config.updateInt * 1000 - 1, false);
     }
 
     public static void addCachedTime(UUID uuid, int time, boolean active) {
-        Storage.times.computeIfAbsent(uuid, u -> new TimeWrapper(0, 0)).add(time, active);
+        Storage.times.computeIfAbsent(uuid, u -> new TimeWrapper()).add(time, active);
     }
 
     public static void startSaveTask() {
-        Storage.saveTask = Task.builder()
-                .name("ActiveTime SavePlayerTimes Task")
-                .execute(task -> {
-                    ImmutableMap<UUID, TimeWrapper> times = ImmutableMap.copyOf(Storage.times);
-                    Storage.times.clear();
-                    Task.builder()
-                            .name("ActiveTime SavePlayerTimes Task (Async Processor)")
-                            .execute(t -> {
-                                times.forEach((Util::saveTime));
-                                Storage.syncCurrentDate();
-                                Storage.buildLeaderboard();
-                            })
-                            .async()
-                            .submit(ActiveTime.getPlugin());
-                })
-                .interval(Config.saveInterval * 1000 - 1, TimeUnit.MILLISECONDS)
-                .submit(ActiveTime.getPlugin());
+        Storage.saveTask = createTask("ActiveTime SaveTimes Task", task -> {
+            ImmutableMap<UUID, TimeWrapper> times = ImmutableMap.copyOf(Storage.times);
+            Storage.times.clear();
+            createTask("ActiveTime SaveTimes Async Processor", t -> {
+                times.forEach(Util::saveTime);
+                Storage.syncCurrentDate();
+                Storage.buildLeaderboard();
+            }, 0, true);
+        }, Config.saveInt * 1000 - 1, false);
     }
 
     public static void saveTime(UUID uuid, TimeWrapper time) {
@@ -197,18 +183,10 @@ public class Util {
     }
 
     public static void startMilestoneTask() {
-        Storage.milestoneTask = Task.builder()
-                .name("ActiveTime CheckMilestones Task")
-                .execute(task -> {
-                    List<Player> players = Lists.newArrayList(Sponge.getServer().getOnlinePlayers());
-                    Task.builder()
-                            .name("ActiveTime CheckMilestones Task (Async Processor)")
-                            .execute(t -> players.forEach(Util::checkMilestones))
-                            .async()
-                            .submit(ActiveTime.getPlugin());
-                })
-                .interval(Config.milestoneInterval * 1000 - 1, TimeUnit.MILLISECONDS)
-                .submit(ActiveTime.getPlugin());
+        Storage.milestoneTask = createTask("ActiveTime CheckMilestones Task", task -> {
+            ImmutableList<Player> players = ImmutableList.copyOf(Sponge.getServer().getOnlinePlayers());
+            createTask("ActiveTime CheckMilestones Async Processor", t -> players.forEach(Util::checkMilestones), 0, true);
+        }, Config.milestoneInt * 1000 - 1, false);
     }
 
     public static void checkMilestones(Player player) {
@@ -217,32 +195,16 @@ public class Util {
     }
 
     public static void startLimitTask() {
-        Storage.limitTask = Task.builder()
-                .name("ActiveTime LimitPlayerTimes Task")
-                .execute(task -> {
-                    List<Player> players = Lists.newArrayList(Sponge.getServer().getOnlinePlayers());
-                    Task.builder()
-                            .name("ActiveTime LimitPlayerTimes Task (Async Processor)")
-                            .execute(t -> players.forEach(Util::checkLimit))
-                            .async()
-                            .submit(ActiveTime.getPlugin());
-                })
-                .interval(Config.limitInterval * 1000 - 1, TimeUnit.MILLISECONDS)
-                .submit(ActiveTime.getPlugin());
+        Storage.limitTask = createTask("ActiveTime CheckLimits Task", task -> {
+            ImmutableList<Player> players = ImmutableList.copyOf(Sponge.getServer().getOnlinePlayers());
+            createTask("ActiveTime CheckLimits Async Processor", t -> players.forEach(Util::checkLimit), 0, true);
+        }, Config.limitInt * 1000 - 1, false);
     }
 
     public static void checkLimit(Player player) {
-        player.getOption("playtime").ifPresent(o -> {
-            try {
-                int limit = parseTime(o);
-                if (Storage.getDailyTime(player.getUniqueId()).getActiveTime() >= limit) {
-                    Task.builder()
-                            .name("ActiveTime KickPlayer Task")
-                            .execute(t -> player.kick(Util.toText("You have surpassed your playtime for the day of " + limit + "!")))
-                            .submit(ActiveTime.getPlugin());
-                }
-            } catch (NumberFormatException e) {
-                ActiveTime.getPlugin().getLogger().error("Invalid playtime option for player " + player.getName() + "!");
+        player.getOption("playtime").map(Util::parseTime).filter(i -> i > 0).ifPresent(i -> {
+            if (Storage.getDailyTime(player.getUniqueId()).getActiveTime() >= i) {
+                createTask("ActiveTime KickPlayer Task", task -> player.kick(toText("You have surpassed your playtime for the day of " + i + "!")), 0, false);
             }
         });
     }

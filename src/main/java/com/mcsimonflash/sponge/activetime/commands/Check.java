@@ -1,5 +1,6 @@
 package com.mcsimonflash.sponge.activetime.commands;
 
+import com.google.common.collect.Lists;
 import com.mcsimonflash.sponge.activetime.managers.Storage;
 import com.mcsimonflash.sponge.activetime.managers.Util;
 import org.spongepowered.api.command.CommandException;
@@ -8,35 +9,19 @@ import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.spec.CommandExecutor;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.service.pagination.PaginationList;
-import org.spongepowered.api.text.Text;
-import org.spongepowered.api.text.format.TextColors;
 
 public class Check implements CommandExecutor {
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-        User user = args.<User>getOne("user").orElse(null);
-
-        if (user != null || (src instanceof User)) {
-            user = user == null ? (User) src : user;
-            if (user.getName().equals(src.getName()) || src.hasPermission("activetime.check.other")) {
-                if (user.hasPermission("activetime.log.base")) {
-                    PaginationList.builder()
-                            .padding(Text.of(TextColors.AQUA, "="))
-                            .title(Text.of(user.getName(), "'s Activity"))
-                            .contents(Util.toText(Util.printTime(Storage.getTotalTime(user.getUniqueId()))))
-                            .sendTo(src);
-                    return CommandResult.success();
-                } else {
-                    src.sendMessage(Util.prefix.concat(Util.toText("&b" + user.getName() + " &fis not being logged!")));
-                }
-            } else {
-                src.sendMessage(Util.prefix.concat(Util.toText("You do not have permission to check other player's active time!")));
-            }
-        } else {
-            src.sendMessage(Util.prefix.concat(Util.toText("A player must be specified!")));
+        User user = args.<User>getOne("user").get();
+        if (user != src && !user.hasPermission("activetime.check.other")) {
+                Util.sendMessage(src, "You do not have permission to check other player's active time!");
+                return CommandResult.empty();
+        } else if (!user.hasPermission("activetime.log.base")) {
+            Util.sendMessage(src, "Notice: " + (user == src ? "Your" : user.getName() + "'s") + " time is not currently being logged.");
         }
-        return CommandResult.empty();
+        Util.sendPagination(src, user.getName() + "'s Activity", Lists.newArrayList(Util.toText(Util.printTime(Storage.getTotalTime(user.getUniqueId())))));
+        return CommandResult.success();
     }
 }

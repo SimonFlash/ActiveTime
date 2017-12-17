@@ -2,10 +2,7 @@ package com.mcsimonflash.sponge.activetime;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import com.mcsimonflash.sponge.activetime.commands.Base;
-import com.mcsimonflash.sponge.activetime.commands.Check;
-import com.mcsimonflash.sponge.activetime.commands.Report;
-import com.mcsimonflash.sponge.activetime.commands.Leaderboard;
+import com.mcsimonflash.sponge.activetime.commands.*;
 import com.mcsimonflash.sponge.activetime.managers.Config;
 import com.mcsimonflash.sponge.activetime.managers.NucleusIntegration;
 import com.mcsimonflash.sponge.activetime.managers.Util;
@@ -24,14 +21,13 @@ import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
 import org.spongepowered.api.plugin.Plugin;
-import org.spongepowered.api.scheduler.Task;
 import org.spongepowered.api.text.Text;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "1.3.0", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "1.3.1", authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime plugin;
@@ -71,7 +67,7 @@ public class ActiveTime {
     public void onInit(GameInitializationEvent event) {
         plugin = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.3.0     |");
+        logger.info("|     ActiveTime -- Version 1.3.1     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         try {
@@ -85,23 +81,25 @@ public class ActiveTime {
                 .executor(new Check())
                 .description(Text.of("Shows a player's ActiveTime status"))
                 .permission("activetime.check.base")
-                .arguments(
-                        GenericArguments.optional(GenericArguments.user(Text.of("user"))))
+                .arguments(GenericArguments.userOrSource(Text.of("user")))
                 .build();
         CommandSpec Leaderboard = CommandSpec.builder()
                 .executor(new Leaderboard())
                 .description(Text.of("Displays the leaderboard of active players"))
                 .permission("activetime.leaderboard.base")
-                .arguments(
-                        GenericArguments.optional(GenericArguments.integer(Text.of("positions"))))
+                .arguments(GenericArguments.optional(GenericArguments.integer(Text.of("positions"))))
                 .build();
         CommandSpec Report = CommandSpec.builder()
                 .executor(new Report())
                 .description(Text.of("Generates an ActiveTime report"))
                 .permission("activetime.report.base")
-                .arguments(
-                        GenericArguments.onlyOne(GenericArguments.user(Text.of("user"))),
-                        GenericArguments.onlyOne(GenericArguments.integer(Text.of("days"))))
+                .arguments(GenericArguments.userOrSource(Text.of("user")), GenericArguments.optional(GenericArguments.integer(Text.of("days"))))
+                .build();
+        CommandSpec DailyReport = CommandSpec.builder()
+                .executor(new DailyReport())
+                .description(Text.of("Generates a daily report"))
+                .permission("activetime.dailyreport.base")
+                .arguments(GenericArguments.optional(GenericArguments.string(Text.of("date"))))
                 .build();
         CommandSpec ActiveTime = CommandSpec.builder()
                 .executor(new Base())
@@ -110,6 +108,7 @@ public class ActiveTime {
                 .child(Check, "check", "time")
                 .child(Leaderboard, "leaderboard", "rank", "top")
                 .child(Report, "report", "info")
+                .child(DailyReport, "dailyreport")
                 .build();
         Sponge.getCommandManager().register(plugin, ActiveTime, Lists.newArrayList("activetime", "atime"));
         Sponge.getCommandManager().register(plugin, Check, Lists.newArrayList("ontime", "playtime"));
@@ -118,8 +117,9 @@ public class ActiveTime {
     @Listener
     public void onPostInit(GamePostInitializationEvent event) {
         if (Sponge.getPluginManager().isLoaded("nucleus") && Nucleus.getNucleus().isModuleLoaded("afk")) {
-            NucleusIntegration.RegisterMessageToken();
             nucleusEnabled = true;
+            NucleusIntegration.updateAFKService();
+            NucleusIntegration.RegisterMessageToken();
         } else {
             logger.warn("Nucleus could not be found! Disabling Nucleus support.");
         }
@@ -142,12 +142,8 @@ public class ActiveTime {
     @Listener
     public void onJoin(ClientConnectionEvent.Join event, @Root Player player) {
         Util.startNameTask(player);
-        if (Config.limitInterval > 0) {
-            Task.builder()
-                    .name("ActiveTime CheckPlayerLimit Task (Async Processor)")
-                    .execute(task -> Util.checkLimit(player))
-                    .async()
-                    .submit(ActiveTime.getPlugin());
+        if (Config.limitInt > 0) {
+            Util.createTask("ActiveTime CheckPlayerLimit Async Processor", task -> Util.checkLimit(player), 0, false);
         }
     }
 

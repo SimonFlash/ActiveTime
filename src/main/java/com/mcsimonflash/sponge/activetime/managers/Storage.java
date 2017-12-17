@@ -16,6 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Storage {
 
@@ -23,7 +25,7 @@ public class Storage {
     private static Path logsDir = storDir.resolve("logs");
     private static ConfigWrapper players, current;
 
-    public static LinkedList<Text> leaderboard = Lists.newLinkedList();
+    public static List<Text> leaderboard = Lists.newLinkedList();
     public static List<Milestone> milestones = Lists.newArrayList();
     public static Map<UUID, TimeWrapper> times = Maps.newHashMap();
     public static Task updateTask;
@@ -57,7 +59,7 @@ public class Storage {
     }
 
     public static String getUsername(UUID uuid) {
-        return players.getNode(uuid.toString(), "username").getString("???");
+        return players.getNode(uuid.toString(), "username").getString(uuid.toString());
     }
 
     public static boolean setUsername(UUID uuid, String name) {
@@ -66,7 +68,7 @@ public class Storage {
     }
 
     private static TimeWrapper getTimeWrapper(CommentedConfigurationNode node) {
-        return new TimeWrapper(node.getNode("activetime").getInt(0), node.getNode("afktime").getInt(0));
+        return new TimeWrapper(node.getNode("activetime").getInt(), node.getNode("afktime").getInt());
     }
 
     private static void setTimeWrapper(CommentedConfigurationNode node, TimeWrapper time) {
@@ -115,56 +117,84 @@ public class Storage {
     }
 
     public static void buildLeaderboard() {
-        Map<String, TimeWrapper> times = Maps.newHashMap();
+        AtomicInteger i = new AtomicInteger(1);
+        leaderboard = players.getNode().getChildrenMap().values().stream()
+                .map(n -> Maps.immutableEntry(n.getNode("username").getString((String) n.getKey()), getTimeWrapper(n)))
+                .sorted(Comparator.comparingInt(o -> -o.getValue().getActiveTime()))
+                .map(e -> "&b" + i.getAndIncrement() + "&7: &f" + e.getKey() + " &7- " + Util.printTime(e.getValue().getActiveTime()))
+                .map(Util::toText)
+                .collect(Collectors.toList());
+        /*Map<String, TimeWrapper> times = Maps.newHashMap();
         for (CommentedConfigurationNode node : players.getNode().getChildrenMap().values()) {
             times.put(node.getNode("username").getString((String) node.getKey()), new TimeWrapper(node.getNode("activetime").getInt(0), node.getNode("afktime").getInt(0)));
         }
-        LinkedList<String> players = Lists.newLinkedList(times.keySet());
+        List<String> players = Lists.newArrayList(times.keySet());
         players.sort(Comparator.comparingInt(o -> -times.get(o).getActiveTime()));
-        LinkedList<Text> tempLeaderboard = Lists.newLinkedList();
+        List<Text> tempLeaderboard = Lists.newLinkedList();
         for (int i = 0; i < players.size(); i++) {
             String player = players.get(i);
             tempLeaderboard.add(Util.toText("&b" + (i + 1) + "&7: &f" + player + " &7- " + Util.printTime(times.get(player))));
         }
-        leaderboard = tempLeaderboard;
+        leaderboard = tempLeaderboard;*/
     }
 
-    public static Report getReport(UUID uuid, int size) {
+    public static Report getReport(UUID uuid, int days) {
         Report report = new Report();
-        report.name = getUsername(uuid);
         report.uuid = uuid;
+        report.name = getUsername(uuid);
         report.total = getTotalTime(uuid);
         LocalDate end = LocalDate.now();
-        LocalDate start = end.minusDays(size);
+        LocalDate start = end.minusDays(days);
         LocalDate week = start.minusDays(start.getDayOfWeek().getValue());
         LocalDate month = start.minusDays(start.getDayOfMonth() - 1);
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
             Path path = logsDir.resolve(date + ".stor");
-            TimeWrapper time = new TimeWrapper(0, 0);
             if (Files.exists(path)) {
                 try {
-                    ConfigWrapper log = new ConfigWrapper(path, false);
-                    time.add(getTimeWrapper(log.getNode(uuid.toString())));
+                    TimeWrapper time = getTimeWrapper(new ConfigWrapper(path, false).getNode(uuid.toString()));
+                    report.dailyTimes.put(date, time);
+                    report.weeklyTimes.computeIfAbsent((week = date.getDayOfWeek().getValue() == 7 ? date : week), w -> new TimeWrapper()).add(time);
+                    report.monthlyTimes.computeIfAbsent((month = date.getDayOfMonth() == 1 ? date : month), m -> new TimeWrapper()).add(time);
                 } catch (IOException e) {
                     report.error = true;
                     ActiveTime.getPlugin().getLogger().error("Unable to generate ActiveTime Report for uuid " + uuid + " with log " + path.getFileName() + "!");
                     e.printStackTrace();
                 }
             }
-            report.dailyTimes.put(date, time);
-            week = date.getDayOfWeek().getValue() == 7 ? date : week;
-            report.weeklyTimes.putIfAbsent(week, new TimeWrapper(0, 0));
-            report.weeklyTimes.get(week).add(time);
-            month = date.getDayOfMonth() == 1 ? date : month;
-            report.monthlyTimes.putIfAbsent(month, new TimeWrapper(0, 0));
-            report.monthlyTimes.get(month).add(time);
         }
-        report.dailyTimes.values().forEach(t -> report.dailyAverage.add(t));
-        report.dailyAverage.set(report.dailyAverage.getActiveTime() / report.dailyTimes.size(), report.dailyAverage.getAfkTime() / report.dailyTimes.size());
-        report.weeklyTimes.values().forEach(t -> report.weeklyAverage.add(t));
-        report.weeklyAverage.set(report.weeklyAverage.getActiveTime() / report.weeklyTimes.size(), report.weeklyAverage.getAfkTime() / report.weeklyTimes.size());
-        report.monthlyTimes.values().forEach(t -> report.monthlyAverage.add(t));
-        report.monthlyAverage.set(report.monthlyAverage.getActiveTime() / report.monthlyTimes.size(), report.monthlyAverage.getAfkTime() / report.monthlyTimes.size());
+        if (!report.dailyTimes.isEmpty()) {
+            report.dailyTimes.values().forEach(t -> report.dailyAverage.add(t));
+            report.dailyAverage.set(report.dailyAverage.getActiveTime() / report.dailyTimes.size(), report.dailyAverage.getAfkTime() / report.dailyTimes.size());
+            report.weeklyTimes.values().forEach(t -> report.weeklyAverage.add(t));
+            report.weeklyAverage.set(report.weeklyAverage.getActiveTime() / report.weeklyTimes.size(), report.weeklyAverage.getAfkTime() / report.weeklyTimes.size());
+            report.monthlyTimes.values().forEach(t -> report.monthlyAverage.add(t));
+            report.monthlyAverage.set(report.monthlyAverage.getActiveTime() / report.monthlyTimes.size(), report.monthlyAverage.getAfkTime() / report.monthlyTimes.size());
+        }
+        return report;
+    }
+
+    public static Report.Daily getDailyReport(LocalDate date) {
+        Report.Daily report = new Report.Daily();
+        report.date = date;
+        Path path = logsDir.resolve(date + ".stor");
+        if (Files.exists(path)) {
+            try {
+                ConfigWrapper config = new ConfigWrapper(path, false);
+                config.getNode().getChildrenMap().values().forEach(n -> {
+                    TimeWrapper time = getTimeWrapper(n);
+                    report.total.add(time);
+                    report.userTimes.add(Maps.immutableEntry(players.getNode(n.getKey()).getNode("username").getString((String) n.getKey()), time));
+                });
+                if (!report.userTimes.isEmpty()) {
+                    report.average.set(report.total.getActiveTime() / report.userTimes.size(), report.total.getAfkTime() / report.userTimes.size());
+                    report.userTimes.sort(Comparator.comparingInt(o -> -o.getValue().getActiveTime()));
+                }
+            } catch (IOException e) {
+                report.error = true;
+                ActiveTime.getPlugin().getLogger().error("Unable to generate ActiveTime Report for date " + date + " with log " + path.getFileName() + "!");
+                e.printStackTrace();
+            }
+        }
         return report;
     }
 

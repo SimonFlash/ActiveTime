@@ -5,7 +5,7 @@ plugins {
 
 group 'com.mcsimonflash.sponge.teslacrate'
 ext {
-    activetimeversion = '1.3.0'
+    activetimeversion = '1.3.1'
     spongeapiversion = '7.0.0-SNAPSHOT'
     completeversion = "-s${spongeapiversion.substring(0, 3)}-v${activetimeversion}"
 }

@@ -25,11 +25,11 @@ public class ConfigWrapper {
     public boolean save() {
         try {
             loader.save(node);
+            return true;
         } catch (IOException e) {
-            ActiveTime.getPlugin().getLogger().error("Unable to save file! Error:");
+            ActiveTime.getPlugin().getLogger().error("Unable to save config file! Error:");
             e.printStackTrace();
             return false;
         }
-        return true;
     }
 }

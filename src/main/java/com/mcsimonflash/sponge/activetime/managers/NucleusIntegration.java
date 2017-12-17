@@ -13,13 +13,12 @@ import java.util.Optional;
 
 public class NucleusIntegration {
 
-    private static NucleusAFKService afkService = NucleusAPI.getAFKService().get();
+    private static NucleusAFKService afkService;
 
     public static void RegisterMessageToken() {
         try {
             PluginContainer container = Sponge.getPluginManager().getPlugin("activetime").get();
             NucleusAPI.getMessageTokenService().register(container, (tokenInput, source, variables) -> {
-
                 boolean active;
                 if (tokenInput.equalsIgnoreCase("activetime")) {
                     active = true;
@@ -42,11 +41,14 @@ public class NucleusIntegration {
     }
 
     public static void updateAFKService() {
-        afkService = NucleusAPI.getAFKService().get();
+        afkService = NucleusAPI.getAFKService().orElse(null);
+        if (afkService == null) {
+            ActiveTime.getPlugin().getLogger().error("Unable to find Nucleus AFK Service");
+        }
     }
 
     public static boolean isPlayerAfk(Player player) {
-        return afkService.isAFK(player);
+        return afkService != null && afkService.isAFK(player);
     }
 
 }

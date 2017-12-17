@@ -5,6 +5,8 @@ public class TimeWrapper {
     private int activetime;
     private int afktime;
 
+    public TimeWrapper() {}
+
     public TimeWrapper(int activetime, int afktime) {
         set(activetime, afktime);
     }
