@@ -2,6 +2,7 @@ package com.mcsimonflash.sponge.activetime.commands;
 
 import com.google.common.collect.Lists;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
+import com.mcsimonflash.sponge.activetime.managers.Config;
 import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
@@ -22,81 +23,81 @@ public class Base implements CommandExecutor {
         List<Text> commands = Lists.newArrayList();
         if (src.hasPermission("activetime.check.base")) {
             if (src.hasPermission("activetime.check.other")) {
-                commands.add(Text.builder("/ActiveTime Check ")
+                commands.add(Text.builder("/activeTime check ")
                         .color(TextColors.WHITE)
-                        .onClick(TextActions.suggestCommand("/ActiveTime Check "))
+                        .onClick(TextActions.suggestCommand("/activeTime check "))
                         .onHover(TextActions.showText(Text.of(
                                 TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows a users's active time\n",
-                                TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Check, /PlayTime, /OnTime\n",
+                                TextColors.WHITE, "Aliases: ", TextColors.AQUA, "check, /playtime, /ontime\n",
                                 TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.check.base, activetime.check.other")))
                         .append(Text.builder("[User]")
                                 .color(TextColors.AQUA)
                                 .onHover(TextActions.showText(Text.of(
-                                        TextColors.WHITE, "Opt-User<User>: ", TextColors.AQUA, "Name of the user")))
+                                        TextColors.WHITE, "User: ", TextColors.AQUA, "Name of the user, defaults to yourself")))
                                 .build())
                         .build());
             } else {
-                commands.add(Text.builder("/ActiveTime Check")
+                commands.add(Text.builder("/activetime check")
                         .color(TextColors.WHITE)
-                        .onClick(TextActions.suggestCommand("/ActiveTime Check"))
+                        .onClick(TextActions.suggestCommand("/activetime check"))
                         .onHover(TextActions.showText(Text.of(
                                 TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows your active time\n",
-                                TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Check, /PlayTime, /OnTime\n",
+                                TextColors.WHITE, "Aliases: ", TextColors.AQUA, "check, /playtime, /ontime\n",
                                 TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.check.base")))
                         .build());
             }
         }
         if (src.hasPermission("activetime.leaderboard.base")) {
-            commands.add(Text.builder("/ActiveTime Leaderboard ")
+            commands.add(Text.builder("/activetime leaderboard ")
                     .color(TextColors.WHITE)
-                    .onClick(TextActions.suggestCommand("/ActiveTime Leaderboard "))
+                    .onClick(TextActions.suggestCommand("/activetime leaderboard "))
                     .onHover(TextActions.showText(Text.of(
                             TextColors.WHITE, "Check: ", TextColors.AQUA, "Shows the most active players\n",
-                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Leaderboard\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "leaderboard\n",
                             TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.top.base")))
                     .append(Text.builder("[Positions]")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "Positions<Integer>: ", TextColors.AQUA, "Number of positions to display")))
+                                    TextColors.WHITE, "Integer: ", TextColors.AQUA, "Number of positions to display (1 - ", Config.maximumPos, "), default ",Config.defaultPos)))
                             .build())
                     .build());
         }
         if (src.hasPermission("activetime.report.base")) {
-            commands.add(Text.builder("/ActiveTime Report ")
+            commands.add(Text.builder("/activetime report ")
                     .color(TextColors.WHITE)
-                    .onClick(TextActions.suggestCommand("/ActiveTime Report "))
+                    .onClick(TextActions.suggestCommand("/activetime report "))
                     .onHover(TextActions.showText(Text.of(
                             TextColors.WHITE, "Report: ", TextColors.AQUA, "Generates an ActiveTime report\n",
-                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "Report\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "report\n",
                             TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.report.base")))
                     .append(Text.builder("[User] ")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "User<User>: ", TextColors.AQUA, "Name of the user")))
+                                    TextColors.WHITE, "User: ", TextColors.AQUA, "Name of the user, defaults to yourself")))
                             .build())
                     .append(Text.builder("[Days]")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "Days<Integer>: ", TextColors.AQUA, "Number of days to include")))
+                                    TextColors.WHITE, "Integer: ", TextColors.AQUA, "Number of days to include, defaults to day of the month (displays this months data)")))
                             .build())
                     .build());
         }
         if (src.hasPermission("activetime.dailyreport.base")) {
-            commands.add(Text.builder("/ActiveTime DailyReport ")
+            commands.add(Text.builder("/activetime dailyreport ")
                     .color(TextColors.WHITE)
-                    .onClick(TextActions.suggestCommand("/ActiveTime DailyReport "))
+                    .onClick(TextActions.suggestCommand("/activetime dailyreport "))
                     .onHover(TextActions.showText(Text.of(
                             TextColors.WHITE, "DailyReport: ", TextColors.AQUA, "Generates a daily report\n",
-                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "DailyReport\n",
+                            TextColors.WHITE, "Aliases: ", TextColors.AQUA, "dailyreport\n",
                             TextColors.WHITE, "Permission: ", TextColors.AQUA, "activetime.dailyreport.base")))
                     .append(Text.builder("[Date]")
                             .color(TextColors.AQUA)
                             .onHover(TextActions.showText(Text.of(
-                                    TextColors.WHITE, "Date<String>: ", TextColors.AQUA, "The date of the report (yyyy-mm-dd)")))
+                                    TextColors.WHITE, "String: ", TextColors.AQUA, "The date of the report (yyyy-mm-dd), defaults to today")))
                             .build())
                     .build());
         }
-        Text wikiDisc = Text.EMPTY;
+        Text wikiDisc = null;
         if (ActiveTime.getWiki() != null && ActiveTime.getDiscord() != null) {
             wikiDisc = Text.builder("| ")
                     .color(TextColors.WHITE)

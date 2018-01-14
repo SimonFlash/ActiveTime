@@ -124,18 +124,6 @@ public class Storage {
                 .map(e -> "&b" + i.getAndIncrement() + "&7: &f" + e.getKey() + " &7- " + Util.printTime(e.getValue().getActiveTime()))
                 .map(Util::toText)
                 .collect(Collectors.toList());
-        /*Map<String, TimeWrapper> times = Maps.newHashMap();
-        for (CommentedConfigurationNode node : players.getNode().getChildrenMap().values()) {
-            times.put(node.getNode("username").getString((String) node.getKey()), new TimeWrapper(node.getNode("activetime").getInt(0), node.getNode("afktime").getInt(0)));
-        }
-        List<String> players = Lists.newArrayList(times.keySet());
-        players.sort(Comparator.comparingInt(o -> -times.get(o).getActiveTime()));
-        List<Text> tempLeaderboard = Lists.newLinkedList();
-        for (int i = 0; i < players.size(); i++) {
-            String player = players.get(i);
-            tempLeaderboard.add(Util.toText("&b" + (i + 1) + "&7: &f" + player + " &7- " + Util.printTime(times.get(player))));
-        }
-        leaderboard = tempLeaderboard;*/
     }
 
     public static Report getReport(UUID uuid, int days) {

@@ -24,4 +24,5 @@ public class Leaderboard implements CommandExecutor {
         Util.sendPagination(src, "ActiveTime Leaderboard", Storage.leaderboard.stream().limit(positions).collect(Collectors.toList()));
         return CommandResult.success();
     }
+
 }

@@ -27,11 +27,7 @@ public class NucleusIntegration {
                 } else {
                     return Optional.empty();
                 }
-                if (source instanceof User) {
-                    return Optional.of(Util.toText(Util.printTime(Storage.getTotalTime(((User) source).getUniqueId()).getTime(active))));
-                } else {
-                    return Optional.of(Util.toText(active ? "∞" : "√-1"));
-                }
+                return Optional.of(Util.toText(source instanceof User ? Util.printTime(Storage.getTotalTime(((User) source).getUniqueId()).getTime(active)) : active ? "∞" : "√-1"));
             });
             NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", container, "activetime");
             NucleusAPI.getMessageTokenService().registerPrimaryToken("afktime", container, "afktime");
@@ -43,7 +39,7 @@ public class NucleusIntegration {
     public static void updateAFKService() {
         afkService = NucleusAPI.getAFKService().orElse(null);
         if (afkService == null) {
-            ActiveTime.getPlugin().getLogger().error("Unable to find Nucleus AFK Service");
+            ActiveTime.getPlugin().getLogger().error("Unable to find Nucleus AFK Service - Is the AFK module enabled?");
         }
     }
 

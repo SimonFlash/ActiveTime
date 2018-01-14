@@ -44,6 +44,7 @@ public class Util {
                 .title(toText(title))
                 .padding(toText("&b="))
                 .contents(texts)
+                .build()
                 .sendTo(src);
     }
 

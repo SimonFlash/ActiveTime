@@ -17,8 +17,7 @@ public class Report implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         User user = args.<User>getOne("user").get();
         if (!user.hasPermission("activetime.log.base")) {
-            Util.sendMessage(src, "&b" + user.getName() + " &fis not being logged!");
-            return CommandResult.empty();
+            Util.sendMessage(src, "Notice: " + (user == src ? "Your" : user.getName() + "'s") + " time is not currently being logged.");
         }
         int days = args.<Integer>getOne("days").orElseGet(() -> LocalDate.now().getDayOfMonth() - 1);
         if (days < 0 || days > 365) {

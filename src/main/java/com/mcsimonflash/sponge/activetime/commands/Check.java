@@ -15,9 +15,9 @@ public class Check implements CommandExecutor {
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         User user = args.<User>getOne("user").get();
-        if (user != src && !user.hasPermission("activetime.check.other")) {
-                Util.sendMessage(src, "You do not have permission to check other player's active time!");
-                return CommandResult.empty();
+        if (user != src && !src.hasPermission("activetime.check.other")) {
+            Util.sendMessage(src, "You do not have permission to check another player's active time!");
+            return CommandResult.empty();
         } else if (!user.hasPermission("activetime.log.base")) {
             Util.sendMessage(src, "Notice: " + (user == src ? "Your" : user.getName() + "'s") + " time is not currently being logged.");
         }

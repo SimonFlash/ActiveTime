@@ -32,19 +32,32 @@ public class Config {
             updateInt = 1;
         }
         saveInt = core.getNode().getNode("intervals", "save").getInt(30);
-        if (updateInt <= 0) {
+        if (saveInt <= 0) {
             ActiveTime.getPlugin().getLogger().warn("The save interval must be greater than 0! Reverting to 30.");
-            updateInt = 30;
+            saveInt = 30;
         }
         if (updateInt > saveInt) {
-            ActiveTime.getPlugin().getLogger().warn("The update interval should not be larger than the save interval. Reverting to defaults.");
+            ActiveTime.getPlugin().getLogger().warn("The update interval must not be greater than the save interval. Reverting to defaults.");
             updateInt = 1;
             saveInt = 30;
         }
-        milestoneInt = core.getNode().getNode("intervals", "milestone").getInt(60);
         defaultPos = core.getNode().getNode("leaderboard", "default").getInt(10);
+        if (defaultPos <= 0) {
+            ActiveTime.getPlugin().getLogger().warn("The default leaderboard position must be greater than 0! Reverting to 10.");
+            defaultPos = 10;
+        }
         maximumPos = core.getNode().getNode("leaderboard", "maximum").getInt(100);
+        if (maximumPos <= 0) {
+            ActiveTime.getPlugin().getLogger().warn("The maximum leadership position must be greater than 0! Reverting to 10.");
+            maximumPos = 10;
+        }
+        if (defaultPos > maximumPos) {
+            ActiveTime.getPlugin().getLogger().warn("The maximum leaderboard position must not be greater than the default. Reverting to defaults.");
+            defaultPos = 10;
+            maximumPos = 100;
+        }
         Storage.milestones.clear();
+        milestoneInt = core.getNode().getNode("intervals", "milestone").getInt(60);
         milestones.getNode().getChildrenMap().values().forEach(Config::loadMilestone);
         if (milestoneInt <= 0 && !Storage.milestones.isEmpty()) {
             ActiveTime.getPlugin().getLogger().warn("Loaded milestones, but the milestone task is not enabled!");
@@ -58,10 +71,11 @@ public class Config {
             return;
         }
         String command = node.getNode("command").getString("");
-        if (!command.isEmpty()) {
-            Storage.milestones.add(new Milestone((String) node.getKey(), activetime, command));
+        if (command.isEmpty()) {
+            ActiveTime.getPlugin().getLogger().error("Milestone command is empty! | Milestone:[" + node.getKey() + "]");
+            return;
         }
-        ActiveTime.getPlugin().getLogger().error("Milestone command is empty! | Milestone:[" + node.getKey() + "]");
+        Storage.milestones.add(new Milestone((String) node.getKey(), activetime, command));
     }
 
 }
