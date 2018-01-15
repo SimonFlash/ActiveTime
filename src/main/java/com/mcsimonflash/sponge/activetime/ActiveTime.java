@@ -6,7 +6,6 @@ import com.mcsimonflash.sponge.activetime.commands.*;
 import com.mcsimonflash.sponge.activetime.managers.Config;
 import com.mcsimonflash.sponge.activetime.managers.NucleusIntegration;
 import com.mcsimonflash.sponge.activetime.managers.Util;
-import io.github.nucleuspowered.nucleus.Nucleus;
 import org.slf4j.Logger;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.command.args.GenericArguments;
@@ -20,14 +19,17 @@ import org.spongepowered.api.event.game.state.GameInitializationEvent;
 import org.spongepowered.api.event.game.state.GamePostInitializationEvent;
 import org.spongepowered.api.event.game.state.GameStartedServerEvent;
 import org.spongepowered.api.event.network.ClientConnectionEvent;
+import org.spongepowered.api.plugin.Dependency;
 import org.spongepowered.api.plugin.Plugin;
+import org.spongepowered.api.plugin.PluginContainer;
 import org.spongepowered.api.text.Text;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Optional;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "1.3.2", authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "1.3.2", authors = "Simon_Flash", dependencies = @Dependency(id="nucleus", optional = true))
 public class ActiveTime {
 
     private static ActiveTime plugin;
@@ -116,7 +118,8 @@ public class ActiveTime {
 
     @Listener
     public void onPostInit(GamePostInitializationEvent event) {
-        if (Sponge.getPluginManager().isLoaded("nucleus") && Nucleus.getNucleus().isModuleLoaded("afk")) {
+        Optional<PluginContainer> nucleus = Sponge.getPluginManager().getPlugin("nucleus");
+        if (nucleus.isPresent()) {
             nucleusEnabled = true;
             NucleusIntegration.updateAFKService();
             NucleusIntegration.RegisterMessageToken();
