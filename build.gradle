@@ -10,9 +10,16 @@ ext {
     completeversion = "-s${spongeapiversion.substring(0, 3)}-v${activetimeversion}"
 }
 
+repositories {
+    maven {
+        name = 'nucleus-api'
+        url = 'http://repo.drnaylor.co.uk/artifactory/list/minecraft'
+    }
+}
+
 dependencies {
-    compile fileTree(dir: 'libs', include: '*.jar')
     compile "org.spongepowered:spongeapi:${spongeapiversion}"
+    compile 'io.github.nucleuspowered:nucleus-api:1.2.3-SNAPSHOT-S7.0'
 }
 
 jar {

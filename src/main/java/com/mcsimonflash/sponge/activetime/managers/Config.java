@@ -1,13 +1,17 @@
 package com.mcsimonflash.sponge.activetime.managers;
 
+import com.google.common.reflect.TypeToken;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.objects.ConfigWrapper;
 import com.mcsimonflash.sponge.activetime.objects.Milestone;
 import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Config {
 
@@ -70,12 +74,31 @@ public class Config {
             ActiveTime.getPlugin().getLogger().error("Milestone activetime must be greater than 0. | Milestone:[" + node.getKey() + "]");
             return;
         }
-        String command = node.getNode("command").getString("");
-        if (command.isEmpty()) {
-            ActiveTime.getPlugin().getLogger().error("Milestone command is empty! | Milestone:[" + node.getKey() + "]");
-            return;
+
+        if(!node.getNode("commands").isVirtual()) {
+            try {
+                List<String> commands = node.getNode("commands").getList(TypeToken.of(String.class));
+                if (commands.isEmpty()) {
+                    ActiveTime.getPlugin().getLogger().error("Milestone commands entry is empty! | Milestone:[" + node.getKey() + "]");
+                    return;
+                }
+                Storage.milestones.add(new Milestone((String) node.getKey(), activetime, commands));
+
+            } catch (ObjectMappingException e) {
+                e.printStackTrace();
+            }
+        } else {
+            //Handle legacy string
+            String command = node.getNode("command").getString("");
+            if (!command.isEmpty()) {
+                ActiveTime.getPlugin().getLogger().error("Milestone using old syntax! | Milestone:[" + node.getKey() + "]");
+                ArrayList<String> singleCommand = new ArrayList<>(1);
+                singleCommand.add(command);
+                Storage.milestones.add(new Milestone((String) node.getKey(), activetime, singleCommand));
+            } else {
+                ActiveTime.getPlugin().getLogger().error("Legacy milestone command is empty! | Milestone:[" + node.getKey() + "]");
+            }
         }
-        Storage.milestones.add(new Milestone((String) node.getKey(), activetime, command));
     }
 
 }
