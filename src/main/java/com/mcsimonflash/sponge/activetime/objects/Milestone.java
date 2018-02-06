@@ -1,32 +1,52 @@
 package com.mcsimonflash.sponge.activetime.objects;
 
+import com.google.common.collect.ImmutableList;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.managers.Storage;
 import com.mcsimonflash.sponge.activetime.managers.Util;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class Milestone {
 
-    private String name;
-    private int activetime;
-    private String command;
+    private final String name;
+    private final int activetime;
+    private final boolean repeatable;
+    private final ImmutableList<String> commands;
 
-    public Milestone(String name, int activetime, String command) {
+    public Milestone(String name, int activetime, boolean repeatable, List<String> commands) {
         this.name = name;
         this.activetime = activetime;
-        this.command = command;
+        this.repeatable = repeatable;
+        this.commands = ImmutableList.copyOf(commands);
     }
 
     public void process(Player player, int time) {
-        if (time >= activetime && !Storage.hasMilestone(player.getUniqueId(), name)) {
-            if (Storage.setMilestone(player.getUniqueId(), name, true)) {
-                String modifiedCommand = command.replace("<player>", player.getName()).replace("<activetime>", Integer.toString(time));
-                Util.createTask("ActiveTime GiveMilestone Sync Processor (" + player.getName() + ")", task -> Sponge.getCommandManager().process(Sponge.getServer().getConsole(), modifiedCommand), 0, false);
+        int milestoneTime = activetime + (repeatable ? Storage.getMilestoneTime(player.getUniqueId(), this) : 0);
+        if (time > milestoneTime) {
+            if (Storage.setMilestoneTime(player.getUniqueId(), this, milestoneTime)) {
+                List<String> modifiedCommands = commands.stream().map(s -> s.replace("<player>", player.getName()).replace("<activetime>", Util.printTime(time))).collect(Collectors.toList());
+                Util.createTask("ActiveTime GiveMilestone Sync Processor (" + player.getName() + ")", task -> modifiedCommands.forEach(c -> Sponge.getCommandManager().process(Sponge.getServer().getConsole(), c)), 0, false);
             } else {
-                ActiveTime.getPlugin().getLogger().error("Unable to save obtained milestone! | Milestone:[" + name + "] Player:[" + player + "]");
+                ActiveTime.getLogger().error("Unable to save obtained milestone! | Milestone:[" + name + "] Player:[" + player + "]");
             }
         }
+    }
+
+    public String getName() {
+        return name;
+    }
+    public int getActiveTime() {
+        return activetime;
+    }
+    public boolean isRepeatable() {
+        return repeatable;
+    }
+    public ImmutableList<String> getCommands() {
+        return commands;
     }
 
 }

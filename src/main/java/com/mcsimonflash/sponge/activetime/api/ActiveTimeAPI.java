@@ -3,12 +3,14 @@ package com.mcsimonflash.sponge.activetime.api;
 
 import com.mcsimonflash.sponge.activetime.managers.Storage;
 import com.mcsimonflash.sponge.activetime.managers.Util;
-import com.mcsimonflash.sponge.activetime.objects.Report;
-import com.mcsimonflash.sponge.activetime.objects.TimeWrapper;
+import com.mcsimonflash.sponge.activetime.objects.ServerReport;
+import com.mcsimonflash.sponge.activetime.objects.UserReport;
+import com.mcsimonflash.sponge.activetime.objects.TimeHolder;
 import org.spongepowered.api.entity.living.player.User;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class ActiveTimeAPI {
 
@@ -18,7 +20,7 @@ public class ActiveTimeAPI {
      * @param user The user
      * @return The times, in seconds
      */
-    public static TimeWrapper getTotalTime(User user) {
+    public static TimeHolder getTotalTime(User user) {
         return Storage.getTotalTime(user.getUniqueId());
     }
 
@@ -29,7 +31,7 @@ public class ActiveTimeAPI {
      * @param user The user
      * @return The times, in seconds
      */
-    public static TimeWrapper getDailyTime(User user) {
+    public static TimeHolder getDailyTime(User user) {
         return Storage.getDailyTime(user.getUniqueId());
     }
 
@@ -41,7 +43,7 @@ public class ActiveTimeAPI {
      * @param user The user
      * @return The times, in seconds
      */
-    public static Optional<TimeWrapper> getTime(User user, LocalDate date) {
+    public static Optional<TimeHolder> getTime(User user, LocalDate date) {
         return Storage.getTime(user.getUniqueId(), date);
     }
 
@@ -57,19 +59,35 @@ public class ActiveTimeAPI {
     }
 
     /**
-     * Returns a report of this users activity over the given number of days.
-     * The report also includes the current day automatically, meaning that a
-     * report for 1 day includes both yesterday and today.
+     * Gets a report of the user's activity over the given {@link LocalDate}s.
+     * It is strongly recommended to generate the report asynchronously, and as
+     * such this method returns a {@link CompletableFuture<UserReport>}.
      *
      * @param user The user
-     * @param days The number of days to include
-     * @return The generated report
-     * @deprecated for removal in 1.4.0. This will be replaced with a completely
-     *             different method for retrieving a user report.
+     * @param from The date to start the report
+     * @param to The date to end the report
+     * @return A CompletableFuture with the generated report
+     * @deprecated This method is not a stable part of the API, but is provided
+     *         for those who wish to use it.
      */
     @Deprecated
-    public static Report getReport(User user, int days) {
-        return Storage.getReport(user.getUniqueId(), days);
+    public static CompletableFuture<UserReport> getUserReport(User user, LocalDate from, LocalDate to) {
+        return CompletableFuture.supplyAsync(() -> new UserReport(user.getUniqueId(), from, to).generate());
+    }
+
+    /**
+     * Gets a report of the server's activity over the given {@link LocalDate}s.
+     * It is strongly recommended to generate the report asynchronously, and as
+     * such this method returns a {@link CompletableFuture<UserReport>}.
+     *
+     * @param from The date to start the report
+     * @param to The date to end the report
+     * @return A CompletableFuture with the generated report
+     * @deprecated This method is not a stable part of the API, but is provided
+     *         for those who wish to use it.
+     */
+    public static CompletableFuture<ServerReport> getServerReport(LocalDate from, LocalDate to) {
+        return CompletableFuture.supplyAsync(() -> new ServerReport(from, to).generate());
     }
 
 }
