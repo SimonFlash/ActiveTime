@@ -65,6 +65,10 @@ public class Storage {
         }
     }
 
+    public static boolean save() {
+        return players.save() & current.save();
+    }
+
     public static void readStorage() {
         initializeNodes();
     }
@@ -73,16 +77,15 @@ public class Storage {
         return players.getNode(uuid.toString(), "username").getString(uuid.toString());
     }
 
-    public static boolean setUsername(UUID uuid, String name) {
+    public static void setUsername(UUID uuid, String name) {
         players.getNode(uuid.toString(), "username").setValue(name);
-        return players.save();
     }
 
     private static TimeHolder getTimeHolder(CommentedConfigurationNode node) {
         return new TimeHolder(node.getNode("activetime").getInt(), node.getNode("afktime").getInt());
     }
 
-    private static void setTimeWrapper(CommentedConfigurationNode node, TimeHolder time) {
+    private static void setTimeHolder(CommentedConfigurationNode node, TimeHolder time) {
         node.getNode("activetime").setValue(time.getActiveTime());
         node.getNode("afktime").setValue(time.getAfkTime());
     }
@@ -91,18 +94,16 @@ public class Storage {
         return getTimeHolder(players.getNode(uuid.toString()));
     }
 
-    public static boolean setTotalTime(UUID uuid, TimeHolder time) {
-        setTimeWrapper(players.getNode(uuid.toString()), time);
-        return players.save();
+    public static void setTotalTime(UUID uuid, TimeHolder time) {
+        setTimeHolder(players.getNode(uuid.toString()), time);
     }
 
     public static TimeHolder getDailyTime(UUID uuid) {
         return getTimeHolder(current.getNode(uuid.toString()));
     }
 
-    public static boolean setDailyTime(UUID uuid, TimeHolder time) {
-        setTimeWrapper(current.getNode(uuid.toString()), time);
-        return current.save();
+    public static void setDailyTime(UUID uuid, TimeHolder time) {
+        setTimeHolder(current.getNode(uuid.toString()), time);
     }
 
     public static Optional<TimeHolder> getTime(UUID uuid, LocalDate date) {
@@ -122,9 +123,8 @@ public class Storage {
         return players.getNode(uuid.toString(), "milestones", milestone.getName()).getInt(0);
     }
 
-    public static boolean setMilestoneTime(UUID uuid, Milestone milestone, int time) {
+    public static void setMilestoneTime(UUID uuid, Milestone milestone, int time) {
         players.getNode(uuid.toString(), "milestones", milestone.getName()).setValue(time);
-        return players.save();
     }
 
     public static void buildLeaderboard() {

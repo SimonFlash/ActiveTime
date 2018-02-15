@@ -25,14 +25,11 @@ public class Milestone {
     }
 
     public void process(Player player, int time) {
-        int milestoneTime = activetime + (repeatable ? Storage.getMilestoneTime(player.getUniqueId(), this) : 0);
-        if (time > milestoneTime) {
-            if (Storage.setMilestoneTime(player.getUniqueId(), this, milestoneTime)) {
-                List<String> modifiedCommands = commands.stream().map(s -> s.replace("<player>", player.getName()).replace("<activetime>", Util.printTime(time))).collect(Collectors.toList());
-                Util.createTask("ActiveTime GiveMilestone Sync Processor (" + player.getName() + ")", task -> modifiedCommands.forEach(c -> Sponge.getCommandManager().process(Sponge.getServer().getConsole(), c)), 0, false);
-            } else {
-                ActiveTime.getLogger().error("Unable to save obtained milestone! | Milestone:[" + name + "] Player:[" + player + "]");
-            }
+        int last = Storage.getMilestoneTime(player.getUniqueId(), this);
+        if (repeatable ? time >= activetime + last : last == 0 && time >= activetime) {
+            Storage.setMilestoneTime(player.getUniqueId(), this, time);
+            List<String> modifiedCommands = commands.stream().map(s -> s.replace("<player>", player.getName()).replace("<activetime>", Util.printTime(time))).collect(Collectors.toList());
+            Util.createTask("ActiveTime GiveMilestone Sync Processor (" + player.getName() + ")", task -> modifiedCommands.forEach(c -> Sponge.getCommandManager().process(Sponge.getServer().getConsole(), c)), 0, false);
         }
     }
 

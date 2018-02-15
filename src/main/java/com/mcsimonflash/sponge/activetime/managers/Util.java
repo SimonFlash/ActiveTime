@@ -72,11 +72,9 @@ public class Util {
 
     public static void startTasks() {
         if (Storage.updateTask != null) {
-            Storage.updateTask.getConsumer().accept(Storage.updateTask);
             Storage.updateTask.cancel();
         }
         if (Storage.saveTask != null) {
-            Storage.saveTask.getConsumer().accept(Storage.saveTask);
             Storage.saveTask.cancel();
         }
         if (Storage.milestoneTask != null) {
@@ -146,8 +144,9 @@ public class Util {
     public static void startNameTask(Player player) {
         createTask("ActiveTime UpdateUsername Task (" + player.getUniqueId() + ")", task -> {
             String name = Storage.getUsername(player.getUniqueId());
-            if (!player.getName().equals(name) && !Storage.setUsername(player.getUniqueId(), player.getName())) {
-                ActiveTime.getLogger().error("Error updating username. | UUID:[" + player.getUniqueId() + "] NewName:[" + player.getName() + "] OldName:[\" + name + \"] ");
+            if (!player.getName().equals(name)) {
+                Storage.setUsername(player.getUniqueId(), player.getName());
+                Storage.save();
             }
         }, 0, true);
     }
@@ -172,6 +171,7 @@ public class Util {
             Storage.times.clear();
             createTask("ActiveTime SaveTimes Async Processor", t -> {
                 times.forEach(Util::saveTime);
+                Storage.save();
                 Storage.syncCurrentDate();
                 Storage.buildLeaderboard();
             }, 0, true);
@@ -179,21 +179,25 @@ public class Util {
     }
 
     public static void saveTime(UUID uuid, TimeHolder time) {
-        if (!Storage.setTotalTime(uuid, Storage.getTotalTime(uuid).add(time)) | !Storage.setDailyTime(uuid, Storage.getDailyTime(uuid).add(time))) {
-            ActiveTime.getLogger().error("Error saving time for uuid " + uuid + "!");
-        }
+        Storage.setTotalTime(uuid, Storage.getTotalTime(uuid).add(time));
+        Storage.setDailyTime(uuid, Storage.getDailyTime(uuid).add(time));
     }
 
     public static void startMilestoneTask() {
         Storage.milestoneTask = createTask("ActiveTime CheckMilestones Task", task -> {
             ImmutableList<Player> players = ImmutableList.copyOf(Sponge.getServer().getOnlinePlayers());
-            createTask("ActiveTime CheckMilestones Async Processor", t -> players.forEach(Util::checkMilestones), 0, true);
+            createTask("ActiveTime CheckMilestones Async Processor", t -> {
+                        players.forEach(Util::checkMilestones);
+                        Storage.save();
+            }, 0, true);
         }, Config.milestoneInt * 1000 - 1, false);
     }
 
     public static void checkMilestones(Player player) {
         int activetime = Storage.getTotalTime(player.getUniqueId()).getActiveTime();
-        Storage.milestones.values().forEach(m -> m.process(player, activetime));
+        Storage.milestones.values().stream()
+                .filter(m -> player.hasPermission("activetime.milestones." + m.getName() + ".base"))
+                .forEach(m -> m.process(player, activetime));
     }
 
     public static void startLimitTask() {
