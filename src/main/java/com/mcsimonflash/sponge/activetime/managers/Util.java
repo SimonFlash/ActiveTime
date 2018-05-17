@@ -54,7 +54,8 @@ public class Util {
 
     public static Task createTask(String name, Consumer<Task> consumer, int interval, boolean async) {
         return (async ? Task.builder().async() : Task.builder())
-                .name(name).execute(consumer)
+                .name(name)
+                .execute(consumer)
                 .interval(interval, TimeUnit.MILLISECONDS)
                 .submit(ActiveTime.getInstance());
     }
@@ -172,7 +173,6 @@ public class Util {
             createTask("ActiveTime SaveTimes Async Processor", t -> {
                 times.forEach(Util::saveTime);
                 Storage.save();
-                Storage.syncCurrentDate();
                 Storage.buildLeaderboard();
             }, 0, true);
         }, Config.saveInt * 1000 - 1, false);
@@ -187,8 +187,8 @@ public class Util {
         Storage.milestoneTask = createTask("ActiveTime CheckMilestones Task", task -> {
             ImmutableList<Player> players = ImmutableList.copyOf(Sponge.getServer().getOnlinePlayers());
             createTask("ActiveTime CheckMilestones Async Processor", t -> {
-                        players.forEach(Util::checkMilestones);
-                        Storage.save();
+                players.forEach(Util::checkMilestones);
+                Storage.save();
             }, 0, true);
         }, Config.milestoneInt * 1000 - 1, false);
     }

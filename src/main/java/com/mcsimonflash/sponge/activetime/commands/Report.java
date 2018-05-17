@@ -19,10 +19,10 @@ import org.spongepowered.api.text.Text;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
-public class GenerateReport implements CommandExecutor {
+public class Report implements CommandExecutor {
 
     public static final CommandSpec SPEC = CommandSpec.builder()
-            .executor(new GenerateReport())
+            .executor(new Report())
             .arguments(FlagsElement.builder()
                     .flag("server", "s")
                     .flag(new DateElement(Text.of("from")), "from", "f")
@@ -38,20 +38,24 @@ public class GenerateReport implements CommandExecutor {
         LocalDate from = args.<LocalDate>getOne("from").orElseGet(() -> LocalDate.now().withDayOfMonth(1));
         LocalDate to = args.<LocalDate>getOne("to").orElseGet(LocalDate::now);
         if (to.isBefore(from)) {
-            Util.sendMessage(src, "The from date &b" + from.toString() + "&f must be before the to date &b" + to.toString() + "&f.");
+            throw new CommandException(Util.toText("&fThe from date &b" + from.toString() + "&f must be before the to date &b" + to.toString() + "&f."));
         } else if (ChronoUnit.DAYS.between(from, to) + 1 > Config.maximumRep) {
-            Util.sendMessage(src, "The range of dates must not exceed the maximum report size of &b" + Config.maximumRep + " &fdays.");
+            throw new CommandException(Util.toText("&fThe range of dates must not exceed the maximum report size of &b" + Config.maximumRep + " &fdays."));
         } else if (args.hasAny("server")) {
+            if (!src.hasPermission("activetime.report.server")) {
+                throw new CommandException(Util.toText("&fYou do not have permission to generate a server report."));
+            }
             Util.sendMessage(src, "Generating server report between &b" + from + " &fand &b" + to + ".");
             Util.createTask("ActiveTime Server Report Generator (" + src.getName() + ")", t -> Util.sendPagination(src, "Server Activity", new ServerReport(from, to).generate().print()), 0, true);
-            return CommandResult.success();
         } else if (args.hasAny("user") || (src instanceof User)) {
             User user = args.<User>getOne("user").orElseGet(() -> (User) src);
+            if (user != src && !src.hasPermission("activetime.report.other")) {
+                throw new CommandException(Util.toText("&fYou do not have permission to generate a report for another user."));
+            }
             Util.sendMessage(src, "Generating user report for &b" + user.getName() + " &fbetween &b" + from + " &fand &b" + to + ".");
             Util.createTask("ActiveTime User Report Generator (" + src.getName() + ")", t -> Util.sendPagination(src, user.getName() + "'s Activity", new UserReport(user.getUniqueId(), from, to).generate().print()), 0, true);
-            return CommandResult.success();
         } else {
-            Util.sendMessage(src, "A user must be defined to use this command from console!");
+            throw new CommandException(Util.toText("&fA user must be defined to use this command from console."));
         }
         return CommandResult.success();
     }

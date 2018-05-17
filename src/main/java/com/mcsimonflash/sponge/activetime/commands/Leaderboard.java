@@ -28,8 +28,7 @@ public class Leaderboard implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         Integer positions = args.<Integer>getOne("positions").orElse(Config.defaultPos);
         if (positions <= 0 || positions > Config.maximumPos) {
-            Util.sendMessage(src, "Range must be within &b1 &fand &b" + Config.maximumPos + "&f.");
-            return CommandResult.empty();
+            throw new CommandException(Util.toText("&fRange must be within &b1 &fand &b" + Config.maximumPos + "&f."));
         }
         Util.sendPagination(src, "ActiveTime Leaderboard", Storage.leaderboard.stream().limit(positions).collect(Collectors.toList()));
         return CommandResult.success();

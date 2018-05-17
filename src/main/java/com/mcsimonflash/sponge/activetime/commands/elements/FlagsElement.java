@@ -9,17 +9,13 @@ import org.spongepowered.api.command.args.ArgumentParseException;
 import org.spongepowered.api.command.args.CommandArgs;
 import org.spongepowered.api.command.args.CommandContext;
 import org.spongepowered.api.command.args.CommandElement;
-import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.text.Text;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-
 
 public class FlagsElement extends CommandElement {
 
@@ -62,19 +58,17 @@ public class FlagsElement extends CommandElement {
                 if (element == null || split.length == 1 && !args.hasNext()) {
                     return unused.stream().flatMap(Collection::stream).map(s -> "-" + s).filter(s -> s.toLowerCase().startsWith(split[0].toLowerCase())).collect(Collectors.toList());
                 } else if (split.length == 2) {
-                    args.insertArg(split[1]); //why is this needed?
+                    args.insertArg(split[1]);
                 }
                 Object state = args.getState();
                 try {
                     element.parse(src, args, ctx);
-                    if (args.hasNext()) {
-                        unused.removeIf(l -> l.contains(split[0].substring(1).toLowerCase()));
-                        continue;
-                    }
-                } catch (ArgumentParseException ignored) {}
-                args.setState(state);
-                String prefix = split.length == 2 ? split[0] + "=" : args.hasNext() ? "" : split[0] + " ";
-                return element.complete(src, args, ctx).stream().map(s -> prefix + s).collect(Collectors.toList());
+                    unused.removeIf(l -> l.contains(split[0].substring(1).toLowerCase()));
+                } catch (ArgumentParseException e) {
+                    args.setState(state);
+                    String start = split.length == 2 ? split[0] + "=" : "";
+                    return element.complete(src, args, ctx).stream().map(s -> start + s).collect(Collectors.toList());
+                }
             }
         } catch (ArgumentParseException ignored) {}
         return args.nextIfPresent().map(String::toLowerCase).map(a -> unused.stream()
@@ -99,7 +93,7 @@ public class FlagsElement extends CommandElement {
 
     @Override
     @Deprecated
-    protected Object parseValue(CommandSource source, CommandArgs args) throws ArgumentParseException {
+    protected Object parseValue(CommandSource src, CommandArgs args) {
         throw new UnsupportedOperationException("Attempted to parse a value from flags.");
     }
 

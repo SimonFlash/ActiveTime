@@ -86,6 +86,7 @@ public class ActiveTimeAPI {
      * @deprecated This method is not a stable part of the API, but is provided
      *         for those who wish to use it.
      */
+    @Deprecated
     public static CompletableFuture<ServerReport> getServerReport(LocalDate from, LocalDate to) {
         return CompletableFuture.supplyAsync(() -> new ServerReport(from, to).generate());
     }

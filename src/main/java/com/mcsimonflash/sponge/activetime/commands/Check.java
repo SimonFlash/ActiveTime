@@ -13,6 +13,8 @@ import org.spongepowered.api.command.spec.CommandSpec;
 import org.spongepowered.api.entity.living.player.User;
 import org.spongepowered.api.text.Text;
 
+import java.time.LocalDate;
+
 public class Check implements CommandExecutor {
 
     public static final CommandSpec SPEC = CommandSpec.builder()
@@ -26,12 +28,12 @@ public class Check implements CommandExecutor {
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
         User user = args.<User>getOne("user").get();
         if (user != src && !src.hasPermission("activetime.check.other")) {
-            Util.sendMessage(src, "You do not have permission to check another player's active time!");
-            return CommandResult.empty();
+            throw new CommandException(Util.toText("&fYou do not have permission to check another player's active time!"));
         } else if (!user.hasPermission("activetime.log.base")) {
             Util.sendMessage(src, "Notice: " + (user == src ? "Your" : user.getName() + "'s") + " time is not currently being logged.");
         }
-        Util.sendPagination(src, user.getName() + "'s Activity", Lists.newArrayList(Util.toText(Util.printTime(Storage.getTotalTime(user.getUniqueId())))));
+        Util.sendPagination(src, user.getName() + "'s Activity", Lists.newArrayList(Util.toText("Total: " + Util.printTime(Storage.getTotalTime(user.getUniqueId()))), Util.toText("Today &7(" + Util.printDate(LocalDate.now()) + ")&f: " + Util.printTime(Storage.getDailyTime(user.getUniqueId())))));
         return CommandResult.success();
     }
+
 }

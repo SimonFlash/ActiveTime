@@ -2,7 +2,6 @@ package com.mcsimonflash.sponge.activetime.commands;
 
 import com.google.common.collect.ImmutableMap;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
-import org.spongepowered.api.command.CommandException;
 import org.spongepowered.api.command.CommandResult;
 import org.spongepowered.api.command.CommandSource;
 import org.spongepowered.api.command.args.CommandContext;
@@ -26,18 +25,18 @@ public class Base implements CommandExecutor {
             .executor(new Base())
             .child(Check.SPEC, "check", "info", "time")
             .child(Leaderboard.SPEC, "leaderboard", "rank", "top")
-            .child(GenerateReport.SPEC, "generatereport", "report")
+            .child(Report.SPEC, "report")
             .description(Text.of("Opens the in-game documentation"))
             .permission("activetime.base")
             .build();
 
     @Override
-    public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
+    public CommandResult execute(CommandSource src, CommandContext args) {
         (src instanceof Player ? PaginationList.builder() : PaginationList.builder().linesPerPage(-1))
                 .padding(Text.of(TextColors.AQUA, "="))
                 .title(Text.of("ActiveTime"))
                 .contents(USAGES.entrySet().stream().filter(e -> src.hasPermission(e.getKey())).map(Map.Entry::getValue).collect(Collectors.toList()))
-                .footer(WIKI_DISC)
+                .footer(LINKS)
                 .build()
                 .sendTo(src);
         return CommandResult.success();
@@ -46,11 +45,10 @@ public class Base implements CommandExecutor {
     private static final ImmutableMap<String, Text> USAGES = ImmutableMap.<String, Text>builder()
             .put("activetime.base", usage("/activetime "))
             .put("activetime.check.base", usage("/activetime check ", arg(false, "user", "Name of the user to check")))
-            .put("activetime.putall.base", usage("/activetime dailyreport ", arg(false, "date", "Date of the daily report")))
             .put("activetime.leaderboard.base", usage("/activetime leaderboard ", arg(false, "positions", "Number of positions to include")))
-            .put("activetime.report.base", usage("/activetime report ", arg(false, "user", "Name of the user for the report"), arg(false, "days", "Number of days to include")))
+            .put("activetime.report.base", usage("/activetime report ", arg(false, "-server", "Generate a report for the server"), arg(false, "-user", "Generate a report for a user"), arg(false, "-from", "The date to start the report"), arg(false, "-to", "The date to end the report")))
             .build();
-    private static final Text WIKI_DISC = Text.of("| ", link("ActiveTime Wiki", Optional.ofNullable(ActiveTime.getWiki())), " | ", link("Support Discord", Optional.ofNullable(ActiveTime.getDiscord())), " |");
+    private static final Text LINKS = Text.of("                      ", TextColors.GRAY, link("Ore Project", Optional.ofNullable(ActiveTime.getOre())), TextColors.GRAY, " | ", link("Support Discord", Optional.ofNullable(ActiveTime.getDiscord())));
 
     private static Text usage(String base, Text... args) {
         return Text.builder(base)

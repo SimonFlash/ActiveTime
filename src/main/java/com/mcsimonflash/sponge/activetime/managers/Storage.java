@@ -55,18 +55,20 @@ public class Storage {
         }
     }
 
-    public static boolean syncCurrentDate() {
+    private static void syncCurrentDate() {
         try {
             current = new ConfigHolder(logsDir.resolve(LocalDate.now() + ".stor"), false);
-            return true;
         } catch (IOException e) {
             ActiveTime.getLogger().error("Unable to initiate daily log file!");
-            return false;
         }
     }
 
-    public static boolean save() {
-        return players.save() & current.save();
+    public static void save() {
+        Util.createTask("ActiveTime SaveConfig Sync Processor", t -> {
+            players.save();
+            current.save();
+            syncCurrentDate();
+        }, 0, false);
     }
 
     public static void readStorage() {
@@ -179,7 +181,7 @@ public class Storage {
 
     public static void generateUserReport(UserReport report) {
         LocalDate week = report.from.minusDays(report.from.getDayOfWeek().getValue()), month = report.from.withDayOfMonth(1);
-        for (LocalDate date = report.to; !date.isBefore(report.from); date = date.minusDays(1)) {
+        for (LocalDate date = report.from; !date.isAfter(report.to); date = date.plusDays(1)) {
             TimeHolder time = getTime(report.uuid, date).orElseGet(TimeHolder::new);
             report.dailyTimes.put(date, time);
             report.weeklyTimes.computeIfAbsent((week = date.getDayOfWeek().getValue() == 7 ? date : week), w -> new TimeHolder()).add(time);

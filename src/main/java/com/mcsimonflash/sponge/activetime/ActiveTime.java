@@ -25,13 +25,13 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "1.4.1", dependencies = @Dependency(id = "nucleus", optional = true), authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "1.4.2", dependencies = @Dependency(id = "nucleus", optional = true), authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime instance;
     @Inject private PluginContainer container;
     @Inject private Logger logger;
-    private URL wiki, discord;
+    private URL ore, discord;
     private boolean nucleusEnabled;
 
     @Inject
@@ -45,12 +45,12 @@ public class ActiveTime {
     public void onInit(GameInitializationEvent event) {
         instance = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.4.1     |");
+        logger.info("|     ActiveTime -- Version 1.4.2     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         Util.initialize();
         try {
-            wiki = new URL("https://github.com/SimonFlash/ActiveTime/wiki");
+            ore = new URL("https://ore.spongepowered.org/Simon_Flash/ActiveTime");
             discord = new URL("https://discordapp.com/invite/4wayq37");
         } catch (MalformedURLException ignored) {
             logger.error("Unable to locate ActiveTime Wiki / Support Discord!");
@@ -97,8 +97,8 @@ public class ActiveTime {
     public static Logger getLogger() {
         return instance.logger;
     }
-    public static URL getWiki() {
-        return instance.wiki;
+    public static URL getOre() {
+        return instance.ore;
     }
     public static URL getDiscord() {
         return instance.discord;

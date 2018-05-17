@@ -16,8 +16,7 @@ public class NucleusIntegration {
 
     public static void registerMessageToken() {
         try {
-            PluginContainer container = Sponge.getPluginManager().getPlugin("activetime").get();
-            NucleusAPI.getMessageTokenService().register(container, (tokenInput, source, variables) -> {
+            NucleusAPI.getMessageTokenService().register(ActiveTime.getContainer(), (tokenInput, source, variables) -> {
                 boolean active;
                 if (tokenInput.equalsIgnoreCase("activetime")) {
                     active = true;
@@ -28,8 +27,8 @@ public class NucleusIntegration {
                 }
                 return Optional.of(Util.toText(source instanceof User ? Util.printTime(Storage.getTotalTime(((User) source).getUniqueId()).getTime(active)) : active ? "∞" : "√-1"));
             });
-            NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", container, "activetime");
-            NucleusAPI.getMessageTokenService().registerPrimaryToken("afktime", container, "afktime");
+            NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", ActiveTime.getContainer(), "activetime");
+            NucleusAPI.getMessageTokenService().registerPrimaryToken("afktime", ActiveTime.getContainer(), "afktime");
         } catch (PluginAlreadyRegisteredException ignored) {
             ActiveTime.getLogger().error("Attempted duplicate registration ActiveTime Nucleus token");
         }

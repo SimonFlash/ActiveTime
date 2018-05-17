@@ -73,7 +73,7 @@ public class Config {
         worlds = loadFilter("worlds");
         Storage.milestones.clear();
         limitInt = core.getNode("intervals", "limit").getInt(-1);
-        milestoneInt = core.getNode("intervals", "milestone").getInt(-1);
+        milestoneInt = core.getNode("intervals", "milestone").getInt(300);
         int i = 0;
         for (CommentedConfigurationNode node : milestones.getNode().getChildrenMap().values()) {
             int activetime = node.getNode("activetime").getInt();
@@ -105,8 +105,11 @@ public class Config {
             ActiveTime.getLogger().warn("Updated " + i + " legacy milestone" + (i == 1 ? "" : "s") + " in the milestones.conf file.");
             milestones.save();
         }
-        if (milestoneInt <= 0 && !Storage.milestones.isEmpty()) {
-            ActiveTime.getLogger().warn("Loaded milestones, but the milestone task is not enabled!");
+        if (Storage.milestones.isEmpty()) {
+            ActiveTime.getLogger().warn("No mileston");
+            milestoneInt = -1;
+        } else if (milestoneInt <= 0) {
+            ActiveTime.getLogger().warn("Loaded milestones, but the milestone task was disabled.");
         }
     }
 

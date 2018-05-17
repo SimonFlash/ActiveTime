@@ -3,8 +3,8 @@ plugins {
     id 'org.spongepowered.plugin' version '0.8.1'
 }
 
-group 'com.mcsimonflash.sponge.teslacrate'
-version '1.4.1'
+group 'com.mcsimonflash.sponge.activetime'
+version '1.4.2'
 ext.spongeversion = '7.1.0-SNAPSHOT'
 
 repositories {
