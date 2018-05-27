@@ -13,6 +13,14 @@ filters {
     # List of worlds that a player must be in to have their activity logged
     worlds=[]
 }
+formats {
+    weeks="#w"
+    days="#d"
+    hours="#h"
+    minutes="#m"
+    seconds="#s"
+    separator=""
+}
 intervals {
     # The interval in seconds between playtime limit checks, set to -1 to disable
     limit=-1

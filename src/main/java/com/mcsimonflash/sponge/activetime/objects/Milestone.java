@@ -17,11 +17,11 @@ public class Milestone {
     private final boolean repeatable;
     private final ImmutableList<String> commands;
 
-    public Milestone(String name, int activetime, boolean repeatable, List<String> commands) {
+    public Milestone(String name, int activetime, boolean repeatable, ImmutableList<String> commands) {
         this.name = name;
         this.activetime = activetime;
         this.repeatable = repeatable;
-        this.commands = ImmutableList.copyOf(commands);
+        this.commands = commands;
     }
 
     public void process(Player player, int time) {

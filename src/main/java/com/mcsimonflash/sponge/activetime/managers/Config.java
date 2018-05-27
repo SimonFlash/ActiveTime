@@ -6,13 +6,12 @@ import com.google.common.reflect.TypeToken;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.objects.ConfigHolder;
 import com.mcsimonflash.sponge.activetime.objects.Milestone;
-import ninja.leaping.configurate.commented.CommentedConfigurationNode;
+import ninja.leaping.configurate.ConfigurationNode;
 import ninja.leaping.configurate.objectmapping.ObjectMappingException;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 public class Config {
 
@@ -20,9 +19,10 @@ public class Config {
     private static ConfigHolder core, milestones;
 
     public static int updateInt, saveInt, milestoneInt, limitInt, defaultPos, maximumPos, maximumRep;
-    public static ImmutableList<String> gameModes, worlds;
+    public static ImmutableList<String> gamemodes, worlds;
 
     public static void readConfig() {
+        Storage.milestones.clear();
         try {
             Files.createDirectories(configuration);
             core = new ConfigHolder(root.resolve("activetime.core"), true);
@@ -69,56 +69,43 @@ public class Config {
         } else if (maximumRep > 365) {
             ActiveTime.getLogger().warn("The maximum report length is over one year. Large reports may result in performance issues.");
         }
-        gameModes = loadFilter("gamemodes");
-        worlds = loadFilter("worlds");
-        Storage.milestones.clear();
+        gamemodes = getStringList(core.getNode("filters", "gamemodes"), "gamemode filters");
+        worlds = getStringList(core.getNode("filters", "worlds"), "world filters");
         limitInt = core.getNode("intervals", "limit").getInt(-1);
         milestoneInt = core.getNode("intervals", "milestone").getInt(300);
-        int i = 0;
-        for (CommentedConfigurationNode node : milestones.getNode().getChildrenMap().values()) {
-            int activetime = node.getNode("activetime").getInt();
+        Util.formats[0] = core.getNode("formats", "weeks").getString("#w");
+        Util.formats[1] = core.getNode("formats", "days").getString("#d");
+        Util.formats[2] = core.getNode("formats", "hours").getString("#h");
+        Util.formats[3] = core.getNode("formats", "minutes").getString("#m");
+        Util.formats[4] = core.getNode("formats", "seconds").getString("#s");
+        Util.formats[5] = core.getNode("formats", "separator").getString("");
+        milestones.getNode().getChildrenMap().values().forEach(m -> {
+            int activetime = m.getNode("activetime").getInt(0);
             if (activetime > 0) {
-                try {
-                    List<String> commands = node.getNode("commands").getList(TypeToken.of(String.class), Lists::newArrayList);
-                    if (!node.getNode("command").isVirtual()) {
-                        String command = node.getNode("command").getString("");
-                        commands.add(command);
-                        node.getNode("command").setValue(null);
-                        node.getNode("commands").setValue(commands);
-                        i++;
-                    }
-                    if (!commands.isEmpty()) {
-                        Milestone milestone = new Milestone((String) node.getKey(), activetime, node.getNode("repeatable").getBoolean(), commands);
-                        Storage.milestones.put(milestone.getName().toLowerCase(), milestone);
-                    } else {
-                        ActiveTime.getLogger().warn("Empty commands list. | Milestone:[" + node.getKey() + "]");
-                    }
-                } catch (ObjectMappingException e) {
-                    ActiveTime.getLogger().error("Unable to load commands list. | Milestone:[" + node.getKey() + "]");
-                    e.printStackTrace();
+                ImmutableList<String> commands = getStringList(m.getNode("commands"), "milestone commands");
+                if (!commands.isEmpty()) {
+                    Milestone milestone = new Milestone((String) m.getKey(), activetime, m.getNode("repeatable").getBoolean(false), commands);
+                    Storage.milestones.put(milestone.getName().toLowerCase(), milestone);
+                } else {
+                    ActiveTime.getLogger().warn("Empty commands list. | Milestone:[" + m.getKey() + "]");
                 }
             } else {
-                ActiveTime.getLogger().error("Milestone activetime must be greater than 0. | Milestone:[" + node.getKey() + "]");
+                ActiveTime.getLogger().error("Milestone activetime must be greater than 0. | Milestone:[" + m.getKey() + "]");
             }
-        }
-        if (i != 0) {
-            ActiveTime.getLogger().warn("Updated " + i + " legacy milestone" + (i == 1 ? "" : "s") + " in the milestones.conf file.");
-            milestones.save();
-        }
+        });
         if (Storage.milestones.isEmpty()) {
-            ActiveTime.getLogger().warn("No mileston");
+            ActiveTime.getLogger().warn("No milestones loaded, disabling the milestone task.");
             milestoneInt = -1;
         } else if (milestoneInt <= 0) {
             ActiveTime.getLogger().warn("Loaded milestones, but the milestone task was disabled.");
         }
     }
 
-    public static ImmutableList<String> loadFilter(String filter) {
+    private static ImmutableList<String> getStringList(ConfigurationNode node, String type) {
         try {
-            return ImmutableList.copyOf(core.getNode("filters", filter).getList(TypeToken.of(String.class), Lists::newArrayList));
+            return ImmutableList.copyOf(node.getList(TypeToken.of(String.class), Lists::newArrayList));
         } catch (ObjectMappingException e) {
-            ActiveTime.getLogger().error("Unable to load " + filter + " list.");
-            e.printStackTrace();
+            ActiveTime.getLogger().error("Unable to load " + type + " list.");
             return ImmutableList.of();
         }
     }

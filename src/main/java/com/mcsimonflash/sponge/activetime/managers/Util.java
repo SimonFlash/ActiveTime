@@ -2,6 +2,7 @@ package com.mcsimonflash.sponge.activetime.managers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.mcsimonflash.sponge.activetime.ActiveTime;
 import com.mcsimonflash.sponge.activetime.objects.TimeHolder;
 import org.spongepowered.api.Sponge;
@@ -31,9 +32,9 @@ import java.util.stream.Stream;
 public class Util {
 
     private static final Text prefix = toText("&b[&fActiveTime&b]&r ");
-    private static final int[] timeConst = {604800, 86400, 3600, 60, 1};
-    private static final String[] unitAbbrev = {"w", "d", "h", "m", "s"};
-    private static final Pattern timeFormat = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
+    private static final int[] constants = {604800, 86400, 3600, 60, 1};
+    static final String[] formats = {"#w", "#d", "#h", "#m", "#s", ""};
+    private static final Pattern timespan = Pattern.compile("(?:([0-9]+)w)?(?:([0-9]+)d)?(?:([0-9]+)h)?(?:([0-9]+)m)?(?:([0-9])+s)?");
 
     public static Text toText(String msg) {
         return TextSerializers.FORMATTING_CODE.deserialize(msg);
@@ -99,10 +100,10 @@ public class Util {
             return Integer.parseInt(timeStr);
         } catch (NumberFormatException ignored) {
             int time = 0;
-            Matcher matcher = timeFormat.matcher(timeStr);
+            Matcher matcher = timespan.matcher(timeStr);
             if (matcher.matches()) {
                 for (int i = 1; i <= 5; i++) {
-                    time += matcher.group(i) != null ? Integer.parseInt(matcher.group(i)) * timeConst[i - 1] : 0;
+                    time += matcher.group(i) != null ? Integer.parseInt(matcher.group(i)) * constants[i - 1] : 0;
                 }
             }
             return time;
@@ -110,17 +111,20 @@ public class Util {
     }
 
     public static String printTime(int time) {
-        if (time <= 0) {
-            return time + "s";
-        }
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 5; i++) {
-            if (time / timeConst[i] > 0) {
-                builder.append(time / timeConst[i]).append(unitAbbrev[i]);
-                time = time % timeConst[i];
+        if (time > 0) {
+            List<String> times = Lists.newArrayList();
+            for (int i = 0; i < 5; i++) {
+                int num = time / constants[i];
+                if (num > 0 && !formats[i].isEmpty()) {
+                    times.add(formats[i].replace("#", String.valueOf(num)).replace("<s>", num == 1 ? "" : "s"));
+                    time -= num * constants[i];
+                }
+            }
+            if (!times.isEmpty()) {
+                return String.join(formats[5], times);
             }
         }
-        return builder.toString();
+        return formats[4].contains("#") ? formats[4].replace("#", String.valueOf(time)).replace("<s>", "s") : time + "s";
     }
 
     public static String printTime(TimeHolder time) {
@@ -131,15 +135,15 @@ public class Util {
         return date.getMonthValue() + "-" + String.format("%02d", date.getDayOfMonth());
     }
 
-    public static List<Player> getLoggedPlayers() {
+    public static Stream<Player> getLoggedPlayers() {
         Stream<Player> stream = Sponge.getServer().getOnlinePlayers().stream().filter(p -> p.hasPermission("activetime.log.base"));
         if (!Config.worlds.isEmpty()) {
             stream = stream.filter(p -> Config.worlds.contains(p.getWorld().getName().toLowerCase()));
         }
-        if (!Config.gameModes.isEmpty()) {
-            stream = stream.filter(p -> Config.gameModes.contains(p.get(Keys.GAME_MODE).orElse(GameModes.NOT_SET).getId().toLowerCase()));
+        if (!Config.gamemodes.isEmpty()) {
+            stream = stream.filter(p -> Config.gamemodes.contains(p.get(Keys.GAME_MODE).orElse(GameModes.NOT_SET).getId().toLowerCase()));
         }
-        return stream.collect(Collectors.toList());
+        return stream;
     }
 
     public static void startNameTask(Player player) {
@@ -154,10 +158,10 @@ public class Util {
 
     public static void startUpdateTask() {
         Storage.updateTask = ActiveTime.isNucleusEnabled() ? createTask("ActiveTime UpdateTimes Task (Nucleus)", task -> {
-            Map<Player, Boolean> players = getLoggedPlayers().stream().collect(Collectors.toMap(p -> p, p -> !NucleusIntegration.SERVICE.isAFK(p)));
+            Map<Player, Boolean> players = getLoggedPlayers().collect(Collectors.toMap(p -> p, p -> !NucleusIntegration.SERVICE.isAFK(p)));
             createTask("ActiveTime UpdateTimes Async Processor (Nucleus)", t -> players.forEach((p, a) -> addCachedTime(p.getUniqueId(), Config.updateInt, a)), 0, true);
         }, Config.updateInt * 1000 - 1, false) : createTask("ActiveTime UpdateTimes Task", task -> {
-            List<Player> players = getLoggedPlayers();
+            List<Player> players = getLoggedPlayers().collect(Collectors.toList());
             createTask("ActiveTime UpdateTimes Async Processor", t -> players.forEach(p -> addCachedTime(p.getUniqueId(), Config.updateInt, true)), 0, true);
         }, Config.updateInt * 1000 - 1, false);
     }

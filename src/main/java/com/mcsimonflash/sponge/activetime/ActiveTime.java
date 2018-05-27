@@ -25,7 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 
-@Plugin(id = "activetime", name = "ActiveTime", version = "1.4.2", dependencies = @Dependency(id = "nucleus", optional = true), authors = "Simon_Flash")
+@Plugin(id = "activetime", name = "ActiveTime", version = "1.4.3", dependencies = @Dependency(id = "nucleus", optional = true), authors = "Simon_Flash")
 public class ActiveTime {
 
     private static ActiveTime instance;
@@ -45,7 +45,7 @@ public class ActiveTime {
     public void onInit(GameInitializationEvent event) {
         instance = this;
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
-        logger.info("|     ActiveTime -- Version 1.4.2     |");
+        logger.info("|     ActiveTime -- Version 1.4.3     |");
         logger.info("|      Developed By: Simon_Flash      |");
         logger.info("+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=+");
         Util.initialize();

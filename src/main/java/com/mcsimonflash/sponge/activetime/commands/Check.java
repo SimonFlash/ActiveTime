@@ -19,14 +19,17 @@ public class Check implements CommandExecutor {
 
     public static final CommandSpec SPEC = CommandSpec.builder()
             .executor(new Check())
-            .arguments(GenericArguments.userOrSource(Text.of("user")))
+            .arguments(GenericArguments.optional(GenericArguments.user(Text.of("user"))))
             .description(Text.of("Shows a player's ActiveTime status"))
             .permission("activetime.check.base")
             .build();
 
     @Override
     public CommandResult execute(CommandSource src, CommandContext args) throws CommandException {
-        User user = args.<User>getOne("user").get();
+        if (!args.hasAny("user") && !(src instanceof User)) {
+            throw new CommandException(Util.toText("&fYou must specify a user for this command."));
+        }
+        User user = args.<User>getOne("user").orElseGet(() -> (User) src);
         if (user != src && !src.hasPermission("activetime.check.other")) {
             throw new CommandException(Util.toText("&fYou do not have permission to check another player's active time!"));
         } else if (!user.hasPermission("activetime.log.base")) {
