@@ -200,7 +200,7 @@ public class Util {
     public static void checkMilestones(Player player) {
         int activetime = Storage.getTotalTime(player.getUniqueId()).getActiveTime();
         Storage.milestones.values().stream()
-                .filter(m -> player.hasPermission("activetime.milestones." + m.getName() + ".base"))
+                .filter(m -> player.hasPermission("activetime.milestones.base"))
                 .forEach(m -> m.process(player, activetime));
     }
 
