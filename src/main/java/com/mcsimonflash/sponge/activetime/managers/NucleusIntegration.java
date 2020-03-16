@@ -25,7 +25,7 @@ public class NucleusIntegration {
                 } else {
                     return Optional.empty();
                 }
-                return Optional.of(Util.toText(source instanceof User ? Util.printTime(Storage.getTotalTime(((User) source).getUniqueId()).getTime(active)) : active ? "âˆž" : "âˆš-1"));
+                return Optional.of(Util.toText(source instanceof User ? Util.printTime(Storage.getTotalTime(((User) source).getUniqueId()).getTime(active)) : active ? "âˆ?" : "âˆ?-1"));
             });
             NucleusAPI.getMessageTokenService().registerPrimaryToken("activetime", ActiveTime.getContainer(), "activetime");
             NucleusAPI.getMessageTokenService().registerPrimaryToken("afktime", ActiveTime.getContainer(), "afktime");
