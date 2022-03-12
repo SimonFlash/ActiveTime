@@ -4,19 +4,22 @@ plugins {
 }
 
 group 'com.mcsimonflash.sponge.activetime'
-version '1.4.3'
+version '1.4.3-fix'
 ext.spongeversion = '7.1.0-SNAPSHOT'
 
 repositories {
+    mavenCentral()
     maven {
         name = 'nucleus-api'
-        url = 'http://repo.drnaylor.co.uk/artifactory/list/minecraft'
+        //url = 'http://repo.drnaylor.co.uk/artifactory/list/minecraft'
+        url = 'https://jitpack.io'
     }
 }
 
 dependencies {
     compileOnly "org.spongepowered:spongeapi:${spongeversion}"
-    compileOnly 'io.github.nucleuspowered:nucleus-api:1.2.3-SNAPSHOT-S7.0'
+    //compileOnly 'io.github.nucleuspowered:nucleus-api:1.2.3-SNAPSHOT-S7.0'
+    implementation 'com.github.NucleusPowered:Nucleus:1.14.3'
 }
 
 jar {
@@ -24,7 +27,7 @@ jar {
 }
 
 task copyJars(type: Copy) {
-    from jar into project.file("#releases/${version}")
+    from jar into project.file("releases/${version}")
 }
 
 build.dependsOn(copyJars)
